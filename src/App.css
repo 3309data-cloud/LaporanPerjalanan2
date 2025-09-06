@@ -1,0 +1,128 @@
+/* --- Default Layout --- */
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0;
+  text-align: left;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f3f4f6;
+}
+
+.report-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  max-height: 80vh;
+}
+
+/* --- Report Preview Layout --- */
+.report-page {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.report-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.report-section {
+  margin-bottom: 1rem;
+}
+
+.report-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.report-label {
+  font-weight: bold;
+  min-width: 180px;
+}
+
+.report-sep {
+  margin-right: 4px;
+}
+
+.report-value {
+  flex: 1;
+}
+
+.report-labelbawah {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.multiline {
+  white-space: pre-line;
+}
+
+.report-photos img {
+  max-width: 180px;
+  border-radius: 8px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+/* --- PRINT STYLES --- */
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background: white;
+  }
+
+  /* Hilangkan filter & tombol print */
+  section:first-of-type,
+  button {
+    display: none !important;
+  }
+
+  main {
+    background: white !important;
+    padding: 0 !important;
+  }
+
+  .report-container {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+  }
+
+  .report-page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 15mm;
+    margin: 0 auto;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: always;
+    font-size: 12pt;
+    line-height: 1.6;
+  }
+
+  .report-title {
+    font-size: 14pt;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  .report-photos img {
+    max-width: 90%;
+    height: auto;
+    margin-bottom: 10px;
+    page-break-inside: avoid;
+  }
+}

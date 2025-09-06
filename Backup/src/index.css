@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.multiline {
+  white-space: pre-line;
+}
+
+.report-page {
+  width: 210mm;          /* A4 width */
+  min-height: 280mm;     /* A4 height */
+  padding: 20mm;         /* margin isi dokumen */
+  margin: 0 auto 20px auto;
+  background: white;
+  font-family: Arial, sans-serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  color: black;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+.report-title {
+  font-size: 16pt;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  text-decoration: underline; /* tambah underline */
+}
+
+
+.report-section {
+  margin-top: 20px;
+}
+
+.report-row {
+  display: flex;
+  margin-bottom: 4px;
+}
+
+.report-label {
+  width: 200px;      /* lebar tetap untuk label */
+  text-align: left;  /* rata kiri */
+}
+.report-labelbawah {
+  min-width: 180px;  /* lebar fix agar sejajar */
+  display: inline-block;
+}
+
+.report-sep {
+  margin-right: 8px; /* jarak kecil setelah : */
+}
+
+
+.report-value {
+  display: table-cell;
+}
+
+
+/* Layout khusus foto */
+.report-photos {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2 kolom */
+  gap: 4px; /* margin tipis antar foto */
+}
+
+.report-photos img {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+
+  /* Hanya laporan yang muncul */
+  body * {
+    visibility: hidden;
+  }
+  .report-page, .report-page * {
+    visibility: visible;
+  }
+
+  .report-page {
+    position: relative;
+    left: 0;
+    top: 0;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: always;
+  }
+
+  /* Hapus halaman kosong setelah laporan terakhir */
+  .report-page:last-child {
+    page-break-after: auto;
+  }
+
+  aside, nav, button {
+    display: none !important;
+  }
+}
+
+/* Atur margin kertas saat print */
+@page {
+  size: A4;
+  margin: 0; /* hilangkan margin default printer */
+}

@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.multiline {
+  white-space: pre-line;
+}
+
+/* Halaman laporan */
+.report-page {
+  width: 210mm;          /* A4 width */
+  min-height: 280mm;     /* A4 height */
+  padding: 20mm;         /* margin isi dokumen */
+  margin: 0 auto 20px auto;
+  background: white;
+  font-family: Arial, sans-serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  color: black;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+.report-title {
+  font-size: 16pt;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  text-decoration: underline;
+}
+
+.report-section {
+  margin-top: 20px;
+}
+
+.report-row {
+  display: flex;
+  margin-bottom: 4px;
+}
+
+.report-label {
+  width: 200px;      /* lebar tetap agar ":" sejajar */
+  text-align: left;
+  font-weight: bold;
+}
+
+.report-sep {
+  margin-right: 8px; /* jarak kecil setelah ":" */
+}
+
+.report-value {
+  flex: 1;
+}
+
+/* Layout khusus foto */
+.report-photos {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2 kolom */
+  gap: 4px; /* margin tipis antar foto */
+  padding-top: 5mm;
+}
+
+.report-photos img {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+}
+
+/* Print settings */
+@media print {
+  @page {
+    size: A4;
+    margin: 0; /* hilangkan margin default browser/printer */
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100%;
+    background: white !important;
+  }
+
+  /* Hanya laporan yang muncul */
+  body * {
+    visibility: hidden;
+  }
+  .report-page, .report-page * {
+    visibility: visible;
+  }
+
+  .report-page {
+    position: relative;
+    left: 0;
+    top: 0;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: always;
+    margin-top: 0 !important;
+    padding-top: 20mm;
+    break-before: always;   /* setiap halaman baru mulai dari atas */
+  }
+
+  /* 🔧 FIX: kompensasi margin extra Chrome di halaman pertama */
+  .report-page:first-child {
+    break-before: auto;
+    margin-top: -20mm !important;
+  }
+
+  /* Hapus halaman kosong setelah laporan terakhir */
+  .report-page:last-child {
+    page-break-after: auto;
+  }
+
+  aside, nav, button {
+    display: none !important;
+  }
+}
