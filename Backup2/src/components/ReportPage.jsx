@@ -1,7 +1,7 @@
 import { useState } from "react";
 import ReportPreview from "./ReportPreview";
 import { useData } from "./DataContext"; // ✅ ambil data dari context
-import { printReportFromDOM } from "./printReport"; // ✅ pakai fungsi print global
+import { printReport } from "./printReport"; // ✅ pakai fungsi print global
 
 function ReportPage() {
   const data = useData(); // ✅ akses data global
@@ -148,7 +148,7 @@ function ReportPage() {
           <h2 className="text-lg font-semibold">Hasil Laporan</h2>
           {filtered.length > 0 && (
             <button
-              onClick={() => printReportFromDOM(filtered[0])} // ✅ cukup kirim row pertama
+              onClick={() => printReport(filtered[0])} // ✅ cukup kirim row pertama
               className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700"
             >
               🖨️ Print

@@ -4,17 +4,16 @@ export default function Sidebar() {
   const location = useLocation();
 
   const menu = [
-    // { name: "Dashboard", path: "/dashboard" },
-    // { name: "Charts", path: "/charts" },
-    { name: "Daftar Perjalanan", path: "/" },
-    { name: "Cetak Laporan", path: "/cetaklaporan" },
-    { name: "Daftar Survey", path: "/daftarsurvey" },
+    { name: "Dashboard", path: "/" },
+    { name: "Charts", path: "/charts" },
+    { name: "Daftar Perjalanan", path: "/tables" },
+       { name: "Cetak Laporan", path: "/cetaklaporan" },
   ];
 
   return (
     <aside className="w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white h-screen fixed shadow-xl">
       <div className="p-4 text-2xl font-bold border-b border-gray-700">
-        Laporan Translok
+        My Dashboard
       </div>
       <nav className="mt-6">
         <ul>

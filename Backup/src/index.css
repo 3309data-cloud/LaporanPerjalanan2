@@ -62,6 +62,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr; /* 2 kolom */
   gap: 4px; /* margin tipis antar foto */
+  margin-top: 20px;
 }
 
 .report-photos img {
@@ -91,7 +92,9 @@
     border: none !important;
     page-break-after: always;
   }
-
+  .report-page:first-child {
+    margin-top: -15mm !important;
+  }
   /* Hapus halaman kosong setelah laporan terakhir */
   .report-page:last-child {
     page-break-after: auto;

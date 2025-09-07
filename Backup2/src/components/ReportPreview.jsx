@@ -23,16 +23,16 @@ function ReportPreview({ row }) {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   }
 
-  // helper: ambil ID file Google Drive & buat direct link stabil
-  function formatFotoLink(url) {
-    if (!url) return "";
-    const cleaned = url.trim();
-    const match = cleaned.match(/[-\w]{25,}/);
-    if (match) {
-      return `https://drive.google.com/uc?id=${match[0]}`;
-    }
-    return cleaned;
+  // 🔧 Ubah link Google Drive jadi direct thumbnail link
+function formatFotoLink(url) {
+  const match = url.match(/[-\w]{25,}/);
+  if (match) {
+    // Gunakan "export=view" untuk bisa di <img>
+    return `https://drive.google.com/uc?export=view&id=${match[0]}`;
   }
+  return url;
+}
+
 
   return (
     <div>
@@ -48,9 +48,7 @@ function ReportPreview({ row }) {
         return (
           <div key={i} className="report-page">
             {/* Judul */}
-            <h2 className="report-title">
-              LAPORAN KEGIATAN PERJALANAN DINAS
-            </h2>
+            <h2 className="report-title">LAPORAN KEGIATAN PERJALANAN DINAS</h2>
 
             {/* Detail utama */}
             <div className="report-section">
@@ -62,7 +60,11 @@ function ReportPreview({ row }) {
               <div className="report-row">
                 <span className="report-label">Nama Kegiatan</span>
                 <span className="report-sep">:</span>
-                <span className="report-value">{row["Nama Survei"]}</span>
+                <span className="report-value">
+                  {[row["Tujuan Kegiatan"], row["Nama Survei"]]
+                    .filter(Boolean) // hilangkan yg kosong/null
+                    .join(" ")}
+                </span>
               </div>
               <div className="report-row">
                 <span className="report-label">Tanggal Pelaksanaan</span>
@@ -101,22 +103,18 @@ function ReportPreview({ row }) {
                 <div className="report-photos mt-2">
                   {foto
                     .split(",")
-                    .slice(0, 5)
+                    .slice(0, 5) // maksimal 5 foto
                     .map((link, idx) => {
-                      const directLink = formatFotoLink(link);
-
-                      console.log("🔗 Link foto:", directLink);
+                      const trimmed = link.trim();
+                      const directLink = formatFotoLink(trimmed);
 
                       return (
                         <img
                           key={idx}
                           src={directLink}
                           alt={`Foto ${idx + 1}`}
-                          onLoad={() =>
-                            console.log("✅ Foto berhasil load:", directLink)
-                          }
                           onError={(e) => {
-                            console.error("❌ Gagal load foto:", directLink);
+                            console.error("❌ Gagal load foto:", e.target.src);
                             e.target.alt = "Foto gagal dimuat";
                             e.target.style.display = "none";
                           }}

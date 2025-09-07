@@ -6,7 +6,6 @@
   white-space: pre-line;
 }
 
-/* Halaman laporan */
 .report-page {
   width: 210mm;          /* A4 width */
   min-height: 280mm;     /* A4 height */
@@ -26,8 +25,9 @@
   text-align: center;
   margin-bottom: 10px;
   text-transform: uppercase;
-  text-decoration: underline;
+  text-decoration: underline; /* tambah underline */
 }
+
 
 .report-section {
   margin-top: 20px;
@@ -39,25 +39,30 @@
 }
 
 .report-label {
-  width: 200px;      /* lebar tetap agar ":" sejajar */
-  text-align: left;
-  font-weight: bold;
+  width: 200px;      /* lebar tetap untuk label */
+  text-align: left;  /* rata kiri */
+}
+.report-labelbawah {
+  min-width: 180px;  /* lebar fix agar sejajar */
+  display: inline-block;
 }
 
 .report-sep {
-  margin-right: 8px; /* jarak kecil setelah ":" */
+  margin-right: 8px; /* jarak kecil setelah : */
 }
 
+
 .report-value {
-  flex: 1;
+  display: table-cell;
 }
+
 
 /* Layout khusus foto */
 .report-photos {
   display: grid;
   grid-template-columns: 1fr 1fr; /* 2 kolom */
   gap: 4px; /* margin tipis antar foto */
-  padding-top: 5mm;
+  margin-top: 20px;
 }
 
 .report-photos img {
@@ -66,17 +71,8 @@
   object-fit: contain;
 }
 
-/* Print settings */
 @media print {
-  @page {
-    size: A4;
-    margin: 0; /* hilangkan margin default browser/printer */
-  }
-
-  html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    height: 100%;
+  body {
     background: white !important;
   }
 
@@ -95,17 +91,10 @@
     box-shadow: none !important;
     border: none !important;
     page-break-after: always;
-    margin-top: 0 !important;
-    padding-top: 20mm;
-    break-before: always;   /* setiap halaman baru mulai dari atas */
   }
-
-  /* 🔧 FIX: kompensasi margin extra Chrome di halaman pertama */
   .report-page:first-child {
-    break-before: auto;
-    margin-top: -20mm !important;
+    margin-top: -15mm !important;
   }
-
   /* Hapus halaman kosong setelah laporan terakhir */
   .report-page:last-child {
     page-break-after: auto;
@@ -114,4 +103,10 @@
   aside, nav, button {
     display: none !important;
   }
+}
+
+/* Atur margin kertas saat print */
+@page {
+  size: A4;
+  margin: 0; /* hilangkan margin default printer */
 }
