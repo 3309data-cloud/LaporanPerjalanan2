@@ -19,9 +19,9 @@ function App() {
           <Navbar />
           <main className="p-6 space-y-6">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/Dashboard" element={<Dashboard />} />
               <Route path="/charts" element={<Charts />} />
-              <Route path="/tables" element={<Tables />} />
+              <Route path="/" element={<Tables />} />
               <Route path="/cetaklaporan" element={<ReportPage />} />
               <Route path="/daftarsurvey" element={<SurveyPage />} />
             </Routes>

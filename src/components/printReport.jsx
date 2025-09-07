@@ -1,10 +1,10 @@
 import React from "react";
-import ReactDOMServer from "react-dom/server";
+import ReactDOM from "react-dom/client"; // ganti ReactDOMServer
 import ReportPreview from "./ReportPreview";
 import { fetchImageBase64 } from "./utils/fetchImageBase64";
 
 /**
- * PrintReport versi otomatis ambil semua foto Drive → base64
+ * PrintReport versi browser-friendly
  */
 export async function printReport(row) {
   console.log("=== DEBUG: printReport START ===");
@@ -38,26 +38,44 @@ export async function printReport(row) {
     }
   }
 
-  // 3️⃣ Render ReportPreview → forceBase64 = true
-  const htmlString = ReactDOMServer.renderToString(
+  // 3️⃣ Render ReportPreview ke div sementara di DOM
+  const tempDiv = document.createElement("div");
+  tempDiv.style.position = "absolute";
+  tempDiv.style.left = "-9999px";
+  tempDiv.style.top = "-9999px";
+  document.body.appendChild(tempDiv);
+
+  const root = ReactDOM.createRoot(tempDiv);
+  root.render(
     <div className="report-container">
       <ReportPreview row={row} forceBase64 />
     </div>
   );
 
+  // tunggu next tick agar React render selesai
+  await new Promise(resolve => setTimeout(resolve, 100));
+
   // 4️⃣ Convert <img> tambahan di HTML
-  const tempDiv = document.createElement("div");
-  tempDiv.innerHTML = htmlString;
   await convertImagesToBase64(tempDiv);
 
-  // 5️⃣ Print
-  doPrint(tempDiv.innerHTML);
+  // 5️⃣ Ambil CSS inline saja (biar Netlify aman)
+  const styles = Array.from(document.querySelectorAll("style"))
+    .map(s => s.outerHTML)
+    .join("\n");
+
+  // 6️⃣ Print
+  doPrint(tempDiv.innerHTML, styles);
+
+  // cleanup
+  root.unmount();
+  document.body.removeChild(tempDiv);
 
   console.log("=== DEBUG: printReport END ===");
 }
 
 /**
  * Print dari DOM yang sudah ada
+ * (tidak diubah, tetap bekerja)
  */
 export async function printReportFromDOM() {
   console.log("=== DEBUG: printReportFromDOM START ===");
@@ -77,7 +95,12 @@ export async function printReportFromDOM() {
   );
   console.log("Jumlah img setelah convert:", clone.querySelectorAll("img").length);
 
-  doPrint(clone.innerHTML);
+  // Ambil CSS inline saja
+  const styles = Array.from(document.querySelectorAll("style"))
+    .map(s => s.outerHTML)
+    .join("\n");
+
+  doPrint(clone.innerHTML, styles);
   console.log("=== DEBUG: printReportFromDOM END ===");
 }
 
@@ -111,8 +134,9 @@ async function convertImagesToBase64(root) {
 
 /**
  * Helper → render ke iframe lalu print
+ * Tambahan parameter stylesHTML untuk inline CSS
  */
-function doPrint(contentHTML) {
+function doPrint(contentHTML, stylesHTML) {
   const iframe = document.createElement("iframe");
   iframe.style.position = "absolute";
   iframe.style.width = "0";
@@ -121,16 +145,13 @@ function doPrint(contentHTML) {
   document.body.appendChild(iframe);
 
   const doc = iframe.contentWindow.document;
-  const styles = Array.from(
-    document.querySelectorAll("style, link[rel='stylesheet']")
-  ).map(node => node.outerHTML).join("\n");
 
   doc.open();
   doc.write(`
     <html>
       <head>
         <title>Print Report</title>
-        ${styles}
+        ${stylesHTML}
       </head>
       <body class="printing-mode">
         ${contentHTML}

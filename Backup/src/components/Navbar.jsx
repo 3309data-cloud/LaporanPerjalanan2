@@ -1,15 +1,20 @@
+import { useLocation } from "react-router-dom";
+
 export default function Navbar() {
+  const location = useLocation();
+
+  // Map path ke judul
+  const titleMap = {
+    "/": "Daftar Perjalanan",
+    "/cetaklaporan": "Cetak Laporan",
+    "/daftarsurvey": "Daftar Survey",
+  };
+
+  const title = titleMap[location.pathname] || "Dashboard";
+
   return (
-    <header className="bg-white shadow-md h-16 flex items-center justify-between px-6">
-      <h1 className="text-xl font-bold text-gray-700">Dashboard</h1>
-      <div className="flex items-center space-x-4">
-        <span className="text-gray-600">Alexander Pierce</span>
-        <img
-          src="https://i.pravatar.cc/40"
-          alt="user"
-          className="rounded-full w-10 h-10 border-2 border-gray-200"
-        />
-      </div>
+    <header className="bg-white shadow-md h-16 flex items-center px-6">
+      <h1 className="text-xl font-bold text-gray-700">{title}</h1>
     </header>
   );
 }

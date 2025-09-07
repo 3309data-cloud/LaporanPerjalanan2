@@ -1,6 +1,6 @@
 export async function fetchImageBase64(fileId) {
   try {
-    const url = `https://script.google.com/macros/s/AKfycbxGvdoKSOvm2ZrykWCvcdNd-puOE5NeOejWdIieMIfOo-gPSmJxuymmNt38MX0H83hK/exec?fileId=${fileId}`;
+    const url = `https://script.google.com/macros/s/AKfycbx2jS1PWUbPDUhuygPaXEF4VCoF-hsXhbPbwvskKQIn_Xz9dgRb-P3W73LyDJ_-Z3j-/exec?fileId=${fileId}`;
     const res = await fetch(url);
     const json = await res.json();
     if (json.error) throw new Error(json.error);
