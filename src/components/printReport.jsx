@@ -58,7 +58,7 @@ export async function printReport(row) {
   // 4️⃣ Convert <img> tambahan di HTML
   await convertImagesToBase64(tempDiv);
 
-  // 5️⃣ Ambil CSS inline saja (biar Netlify aman)
+  // 5️⃣ Ambil CSS inline (style tag)
   const styles = Array.from(document.querySelectorAll("style"))
     .map(s => s.outerHTML)
     .join("\n");
@@ -75,7 +75,6 @@ export async function printReport(row) {
 
 /**
  * Print dari DOM yang sudah ada
- * (tidak diubah, tetap bekerja)
  */
 export async function printReportFromDOM() {
   console.log("=== DEBUG: printReportFromDOM START ===");
@@ -95,7 +94,7 @@ export async function printReportFromDOM() {
   );
   console.log("Jumlah img setelah convert:", clone.querySelectorAll("img").length);
 
-  // Ambil CSS inline saja
+  // Ambil CSS inline
   const styles = Array.from(document.querySelectorAll("style"))
     .map(s => s.outerHTML)
     .join("\n");
@@ -134,7 +133,7 @@ async function convertImagesToBase64(root) {
 
 /**
  * Helper → render ke iframe lalu print
- * Tambahan parameter stylesHTML untuk inline CSS
+ * Tambahan parameter stylesHTML untuk inline CSS + link eksternal
  */
 function doPrint(contentHTML, stylesHTML) {
   const iframe = document.createElement("iframe");
@@ -146,11 +145,17 @@ function doPrint(contentHTML, stylesHTML) {
 
   const doc = iframe.contentWindow.document;
 
+  // 🔑 Tambahkan juga semua <link rel="stylesheet"> dari head
+  const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+    .map(l => l.outerHTML)
+    .join("\n");
+
   doc.open();
   doc.write(`
     <html>
       <head>
         <title>Print Report</title>
+        ${links}
         ${stylesHTML}
       </head>
       <body class="printing-mode">
@@ -165,7 +170,7 @@ function doPrint(contentHTML, stylesHTML) {
 
   if (images.length === 0) {
     iframe.contentWindow.print();
-    document.body.removeChild(iframe);
+    setTimeout(() => document.body.removeChild(iframe), 500);
   } else {
     images.forEach(img => {
       if (img.complete) loaded++;
@@ -173,14 +178,14 @@ function doPrint(contentHTML, stylesHTML) {
         loaded++;
         if (loaded === images.length) {
           iframe.contentWindow.print();
-          document.body.removeChild(iframe);
+          setTimeout(() => document.body.removeChild(iframe), 500);
         }
       };
     });
 
     if (loaded === images.length) {
       iframe.contentWindow.print();
-      document.body.removeChild(iframe);
+      setTimeout(() => document.body.removeChild(iframe), 500);
     }
   }
 }
