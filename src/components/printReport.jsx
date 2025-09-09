@@ -163,7 +163,7 @@ function doPrint(contentHTML, stylesHTML) {
         color: black; box-shadow: 0 0 5px rgba(0,0,0,0.2); border-radius: 12px;
       }
       .report-title {
-        font-size: 16pt; font-weight: bold; text-align: center; margin-bottom: 10px;
+        font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 10px;
         text-transform: uppercase; text-decoration: underline;
       }
       .report-section { margin-top: 20px; margin-bottom: 1rem; }
@@ -187,14 +187,14 @@ function doPrint(contentHTML, stylesHTML) {
         }
         body.printing-mode .report-page {
           width: 210mm !important; min-height: 297mm !important; margin: 0 auto !important;
-          padding: 20mm 15mm !important; box-sizing: border-box !important;
+          padding: 10mm 15mm !important; box-sizing: border-box !important;
           page-break-after: always; page-break-inside: avoid;
           background: white !important; box-shadow: none !important; border: none !important;
           border-radius: 0 !important; font-size: 12pt !important; line-height: 1.5 !important;
           color: black !important;
         }
         .report-page:last-child { page-break-after: auto; }
-        .report-title { font-size: 18pt !important; text-decoration: underline !important; }
+        .report-title { font-size: 14pt !important; text-decoration: underline !important; }
         .report-photos img {
           height: 200px !important; object-fit: contain !important;
         }
