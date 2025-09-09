@@ -6,7 +6,7 @@ const SHEET_NAME = "Sheet1";
 
 // URL Google Apps Script Web App
 const API_BASE =
-  "https://script.google.com/macros/s/AKfycbwCzub4GeZaAq20i7xSsqj3m5RXxBo78aE6L5xrP7c2N1wBMf4b_34cvKaDB_Tnc1RJWw/exec";
+  "https://script.google.com/macros/s/AKfycbzcSl40AUpQCgZzmiEcZvtly-8zlXaItCvrbyOxzVb_2eX1daeuLvcMW9IGrveH93YVKg/exec";
 
 function SurveyPage() {
   const [surveys, setSurveys] = useState([]);
@@ -37,18 +37,22 @@ function SurveyPage() {
     fetchSurveys();
   }, []);
 
+  // 🔐 versi aman: validasi password di server
   const checkPassword = async () => {
     const userInput = window.prompt("Masukkan password:");
     if (!userInput) return false;
 
     try {
-      const res = await fetch(`${API_BASE}?action=getPassword`);
+      const res = await fetch(
+        `${API_BASE}?action=checkPassword&password=${encodeURIComponent(userInput)}`
+      );
       const data = await res.json();
-      if (userInput === data.password) return true;
+
+      if (data.success) return true;
       showAlert("Password salah!");
       return false;
     } catch (err) {
-      console.error("Gagal ambil password:", err);
+      console.error("Gagal verifikasi password:", err);
       showAlert("Gagal memverifikasi password");
       return false;
     }
@@ -166,11 +170,21 @@ function SurveyPage() {
                       className="sr-only peer"
                       onChange={() => toggleStatus(i)}
                     />
-                    <div className={`w-14 h-7 rounded-full relative transition-colors ${isActive ? 'bg-blue-600' : 'bg-gray-400'}`}>
-                      <span className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform ${isActive ? 'left-0.5' : 'right-0.5'}`}></span>
+                    <div
+                      className={`w-14 h-7 rounded-full relative transition-colors ${
+                        isActive ? "bg-blue-600" : "bg-gray-400"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform ${
+                          isActive ? "left-0.5" : "right-0.5"
+                        }`}
+                      ></span>
                     </div>
                   </label>
-                  <span className="text-sm font-medium">{isActive ? "Aktif" : "Non Aktif"}</span>
+                  <span className="text-sm font-medium">
+                    {isActive ? "Aktif" : "Non Aktif"}
+                  </span>
                 </td>
               </tr>
             );

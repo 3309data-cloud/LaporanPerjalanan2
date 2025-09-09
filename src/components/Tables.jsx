@@ -30,24 +30,37 @@ function ReportTable() {
     return `${hari}, ${tanggal}`;
   }
 
-  const filteredData = data.filter((row) => {
-    const tujuanList = [];
-    for (let i = 1; i <= 5; i++) {
-      const desa = row[`Desa(${i})`];
-      let kec = row[`Kecamatan(${i})`];
-      if (kec) kec = kec.length > 4 ? kec.substring(4).trim() : kec.trim();
-      if (desa || kec) tujuanList.push([desa, kec].filter(Boolean).join(", "));
-    }
-    const tujuanLokasi = tujuanList.join(" ");
-    const kegiatanFull = row["Tujuan Kegiatan"];
-    return (
-      row["Nama Survei"].toLowerCase().includes(filters.survei.toLowerCase()) &&
-      kegiatanFull.toLowerCase().includes(filters.kegiatan.toLowerCase()) &&
-      row["Nama"].toLowerCase().includes(filters.nama.toLowerCase()) &&
-      tujuanLokasi.toLowerCase().includes(filters.tujuan.toLowerCase()) &&
-      row["Tanggal Kunjungan"].toLowerCase().includes(filters.tanggal.toLowerCase())
-    );
-  });
+  const filteredData = data
+    .filter((row) => {
+      const tujuanList = [];
+      for (let i = 1; i <= 5; i++) {
+        const desa = row[`Desa(${i})`];
+        let kec = row[`Kecamatan(${i})`];
+        if (kec) kec = kec.length > 4 ? kec.substring(4).trim() : kec.trim();
+        if (desa || kec) tujuanList.push([desa, kec].filter(Boolean).join(", "));
+      }
+      const tujuanLokasi = tujuanList.join(" ");
+      const kegiatanFull = row["Tujuan Kegiatan"];
+      return (
+        row["Nama Survei"].toLowerCase().includes(filters.survei.toLowerCase()) &&
+        kegiatanFull.toLowerCase().includes(filters.kegiatan.toLowerCase()) &&
+        row["Nama"].toLowerCase().includes(filters.nama.toLowerCase()) &&
+        tujuanLokasi.toLowerCase().includes(filters.tujuan.toLowerCase()) &&
+        row["Tanggal Kunjungan"].toLowerCase().includes(filters.tanggal.toLowerCase())
+      );
+    })
+    .sort((a, b) => {
+      // konversi tanggal ke Date
+      const dateA = new Date(a["Tanggal Kunjungan"].split("/").reverse().join("-"));
+      const dateB = new Date(b["Tanggal Kunjungan"].split("/").reverse().join("-"));
+
+      if (dateA.getTime() !== dateB.getTime()) {
+        return dateA - dateB; // urut naik berdasarkan tanggal
+      }
+
+      // kalau tanggal sama → urutkan berdasarkan nama
+      return a["Nama"].localeCompare(b["Nama"]);
+    });
 
   const handlePrint = async (row) => {
     try {

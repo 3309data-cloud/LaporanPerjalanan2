@@ -139,7 +139,7 @@
   }
 
   body.printing-mode .report-page:last-child {
-    page-break-after: auto;
+    page-break-after: avoid;
   }
 
   /* Judul laporan */

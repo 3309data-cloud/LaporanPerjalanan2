@@ -1,7 +1,10 @@
 import React from "react";
-import ReactDOM from "react-dom/client"; // ganti ReactDOMServer
+import ReactDOM from "react-dom/client";
 import ReportPreview from "./ReportPreview";
 import { fetchImageBase64 } from "./utils/fetchImageBase64";
+
+// 🔥 Cache global (dipakai bersama ReportPreview.jsx & printReport.js)
+const imageCache = window.__imageCache || (window.__imageCache = new Map());
 
 /**
  * PrintReport versi browser-friendly
@@ -14,29 +17,39 @@ export async function printReport(row) {
   for (let i = 1; i <= 5; i++) {
     const fotoField = row[`Foto(${i})`];
     if (fotoField) {
-      fotos.push(...fotoField.split(",").map(f => f.trim()).filter(Boolean));
+      fotos.push(...fotoField.split(",").map((f) => f.trim()).filter(Boolean));
     }
   }
   row._fotos = fotos;
 
-  // 2️⃣ Convert semua foto ke base64
-  for (let i = 0; i < row._fotos.length; i++) {
-    const f = row._fotos[i];
-    if (!f.startsWith("data:")) {
+  // 2️⃣ Convert semua foto ke base64 dengan Promise.all + cache
+  await Promise.all(
+    row._fotos.map(async (f, i) => {
+      if (f.startsWith("data:")) return;
+
+      const match = f.match(/[-\w]{25,}/);
+      const fileId = match ? match[0] : null;
+      if (!fileId) return;
+
+      if (imageCache.has(fileId)) {
+        row._fotos[i] = imageCache.get(fileId);
+        return;
+      }
+
       try {
-        const match = f.match(/[-\w]{25,}/);
-        const fileId = match ? match[0] : null;
-        if (fileId) {
-          console.log(`Mengambil base64 untuk foto[${i}] fileId:`, fileId);
-          const base64 = await fetchImageBase64(fileId);
-          if (base64) row._fotos[i] = base64;
-          else console.warn(`fetchImageBase64 returned null untuk foto[${i}]:`, f);
+        console.log(`Mengambil base64 untuk foto[${i}] fileId:`, fileId);
+        const base64 = await fetchImageBase64(fileId);
+        if (base64) {
+          row._fotos[i] = base64;
+          imageCache.set(fileId, base64); // simpan ke cache
+        } else {
+          console.warn(`fetchImageBase64 returned null untuk foto[${i}]:`, f);
         }
       } catch (err) {
         console.error(`Gagal ambil foto base64 foto[${i}]:`, f, err);
       }
-    }
-  }
+    })
+  );
 
   // 3️⃣ Render ReportPreview ke div sementara di DOM
   const tempDiv = document.createElement("div");
@@ -53,14 +66,14 @@ export async function printReport(row) {
   );
 
   // tunggu next tick agar React render selesai
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
   // 4️⃣ Convert <img> tambahan di HTML
   await convertImagesToBase64(tempDiv);
 
   // 5️⃣ Ambil CSS inline saja (biar Netlify aman)
   const styles = Array.from(document.querySelectorAll("style"))
-    .map(s => s.outerHTML)
+    .map((s) => s.outerHTML)
     .join("\n");
 
   // 6️⃣ Print
@@ -74,7 +87,7 @@ export async function printReport(row) {
 }
 
 /**
- * Print dari DOM yang sudah ada
+ * Print dari DOM yang sudah ada (misal preview live)
  */
 export async function printReportFromDOM() {
   console.log("=== DEBUG: printReportFromDOM START ===");
@@ -85,18 +98,24 @@ export async function printReportFromDOM() {
   }
 
   const clone = reportContainer.cloneNode(true);
-  console.log("Clone dibuat. Jumlah img sebelum convert:", clone.querySelectorAll("img").length);
+  console.log(
+    "Clone dibuat. Jumlah img sebelum convert:",
+    clone.querySelectorAll("img").length
+  );
 
   await convertImagesToBase64(clone);
 
   clone.querySelectorAll("img").forEach((img, i) =>
     console.log(`img[${i}] src:`, img.src.substring(0, 100) + "...")
   );
-  console.log("Jumlah img setelah convert:", clone.querySelectorAll("img").length);
+  console.log(
+    "Jumlah img setelah convert:",
+    clone.querySelectorAll("img").length
+  );
 
   // Ambil CSS inline saja
   const styles = Array.from(document.querySelectorAll("style"))
-    .map(s => s.outerHTML)
+    .map((s) => s.outerHTML)
     .join("\n");
 
   doPrint(clone.innerHTML, styles);
@@ -108,32 +127,44 @@ export async function printReportFromDOM() {
  */
 async function convertImagesToBase64(root) {
   const imgs = root.querySelectorAll("img");
-  for (const [index, img] of Array.from(imgs).entries()) {
-    const src = img.getAttribute("src");
-    if (src && !src.startsWith("data:")) {
-      try {
-        console.log(`Convert img[${index}] src:`, src);
-        const match = src.match(/[-\w]{25,}/);
-        const fileId = match ? match[0] : null;
-        if (fileId) {
-          const base64 = await fetchImageBase64(fileId);
-          if (base64) {
-            img.setAttribute("src", base64);
-            console.log(`img[${index}] berhasil di-convert →`, base64.substring(0, 50) + "...");
-          } else {
-            console.warn(`fetchImageBase64 returned null untuk img[${index}]:`, src);
+  await Promise.all(
+    Array.from(imgs).map(async (img, index) => {
+      const src = img.getAttribute("src");
+      if (src && !src.startsWith("data:")) {
+        try {
+          console.log(`Convert img[${index}] src:`, src);
+          const match = src.match(/[-\w]{25,}/);
+          const fileId = match ? match[0] : null;
+          if (fileId) {
+            if (imageCache.has(fileId)) {
+              img.setAttribute("src", imageCache.get(fileId));
+              return;
+            }
+            const base64 = await fetchImageBase64(fileId);
+            if (base64) {
+              img.setAttribute("src", base64);
+              imageCache.set(fileId, base64);
+              console.log(
+                `img[${index}] berhasil di-convert →`,
+                base64.substring(0, 50) + "..."
+              );
+            } else {
+              console.warn(
+                `fetchImageBase64 returned null untuk img[${index}]:`,
+                src
+              );
+            }
           }
+        } catch (e) {
+          console.error(`Gagal convert img[${index}]:`, src, e);
         }
-      } catch (e) {
-        console.error(`Gagal convert img[${index}]:`, src, e);
       }
-    }
-  }
+    })
+  );
 }
 
 /**
  * Helper → render ke iframe lalu print
- * Tambahan parameter stylesHTML untuk inline CSS
  */
 function doPrint(contentHTML, stylesHTML) {
   const iframe = document.createElement("iframe");
@@ -186,7 +217,7 @@ function doPrint(contentHTML, stylesHTML) {
           display: none !important;
         }
         body.printing-mode .report-page {
-          width: 210mm !important; min-height: 297mm !important; margin: 0 auto !important;
+          width: 210mm !important; min-height: 290mm !important; margin: 0 auto !important;
           padding: 10mm 15mm !important; box-sizing: border-box !important;
           page-break-after: always; page-break-inside: avoid;
           background: white !important; box-shadow: none !important; border: none !important;
@@ -203,7 +234,7 @@ function doPrint(contentHTML, stylesHTML) {
     </style>
   `;
 
-  doc.open();
+ doc.open();
   doc.write(`
     <html>
       <head>
@@ -227,13 +258,14 @@ function doPrint(contentHTML, stylesHTML) {
   } else {
     images.forEach(img => {
       if (img.complete) loaded++;
-      else img.onload = img.onerror = () => {
-        loaded++;
-        if (loaded === images.length) {
-          iframe.contentWindow.print();
-          document.body.removeChild(iframe);
-        }
-      };
+      else
+        img.onload = img.onerror = () => {
+          loaded++;
+          if (loaded === images.length) {
+            iframe.contentWindow.print();
+            document.body.removeChild(iframe);
+          }
+        };
     });
 
     if (loaded === images.length) {
