@@ -1,8 +1,7 @@
 import React from "react";
-import ReactDOM from "react-dom/client";
+import ReactDOM from "react-dom/client"; // ganti ReactDOMServer
 import ReportPreview from "./ReportPreview";
 import { fetchImageBase64 } from "./utils/fetchImageBase64";
-import rawAppCss from "./rawAppCss";   // ⬅️ tambahkan ini
 
 /**
  * PrintReport versi browser-friendly
@@ -53,12 +52,13 @@ export async function printReport(row) {
     </div>
   );
 
+  // tunggu next tick agar React render selesai
   await new Promise(resolve => setTimeout(resolve, 100));
 
   // 4️⃣ Convert <img> tambahan di HTML
   await convertImagesToBase64(tempDiv);
 
-  // 5️⃣ Ambil style dari <style>
+  // 5️⃣ Ambil CSS inline saja (biar Netlify aman)
   const styles = Array.from(document.querySelectorAll("style"))
     .map(s => s.outerHTML)
     .join("\n");
@@ -85,8 +85,16 @@ export async function printReportFromDOM() {
   }
 
   const clone = reportContainer.cloneNode(true);
+  console.log("Clone dibuat. Jumlah img sebelum convert:", clone.querySelectorAll("img").length);
+
   await convertImagesToBase64(clone);
 
+  clone.querySelectorAll("img").forEach((img, i) =>
+    console.log(`img[${i}] src:`, img.src.substring(0, 100) + "...")
+  );
+  console.log("Jumlah img setelah convert:", clone.querySelectorAll("img").length);
+
+  // Ambil CSS inline saja
   const styles = Array.from(document.querySelectorAll("style"))
     .map(s => s.outerHTML)
     .join("\n");
@@ -104,12 +112,16 @@ async function convertImagesToBase64(root) {
     const src = img.getAttribute("src");
     if (src && !src.startsWith("data:")) {
       try {
+        console.log(`Convert img[${index}] src:`, src);
         const match = src.match(/[-\w]{25,}/);
         const fileId = match ? match[0] : null;
         if (fileId) {
           const base64 = await fetchImageBase64(fileId);
           if (base64) {
             img.setAttribute("src", base64);
+            console.log(`img[${index}] berhasil di-convert →`, base64.substring(0, 50) + "...");
+          } else {
+            console.warn(`fetchImageBase64 returned null untuk img[${index}]:`, src);
           }
         }
       } catch (e) {
@@ -121,7 +133,7 @@ async function convertImagesToBase64(root) {
 
 /**
  * Helper → render ke iframe lalu print
- * Versi fix: injek CSS langsung dari App.css (inline)
+ * Tambahan parameter stylesHTML untuk inline CSS
  */
 function doPrint(contentHTML, stylesHTML) {
   const iframe = document.createElement("iframe");
@@ -133,12 +145,62 @@ function doPrint(contentHTML, stylesHTML) {
 
   const doc = iframe.contentWindow.document;
 
-  // ⬅️ Satukan CSS dari App.css + style tag runtime
-  const allStyles = `
+  // === Semua CSS dari App.css + Index.css dimasukkan di sini ===
+  const customStyles = `
     <style>
-      ${rawAppCss}
+      #root {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0;
+        text-align: left;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f3f4f6;
+      }
+      .report-container { flex: 1; overflow-y: auto; padding-right: 0.5rem; }
+      .report-page {
+        width: 210mm; min-height: 280mm; padding: 20mm; margin: 0 auto 20px auto;
+        background: white; font-family: Arial, sans-serif; font-size: 12pt; line-height: 1.5;
+        color: black; box-shadow: 0 0 5px rgba(0,0,0,0.2); border-radius: 12px;
+      }
+      .report-title {
+        font-size: 16pt; font-weight: bold; text-align: center; margin-bottom: 10px;
+        text-transform: uppercase; text-decoration: underline;
+      }
+      .report-section { margin-top: 20px; margin-bottom: 1rem; }
+      .report-row { display: flex; margin-bottom: 4px; gap: 0.5rem; }
+      .report-label { font-weight: bold; min-width: 180px; text-align: left; }
+      .report-labelbawah { font-weight: bold; margin-bottom: 0.25rem; min-width: 180px; display: inline-block; }
+      .report-sep { margin-right: 8px; }
+      .report-value { flex: 1; display: table-cell; }
+      .multiline { white-space: pre-line; }
+      .report-photos {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 20px; flex-wrap: wrap;
+      }
+      .report-photos img {
+        width: 100%; max-height: 200px; object-fit: contain; 
+      }
+      @media print {
+        @page { size: A4 portrait; margin: 0mm; }
+        body.printing-mode aside, body.printing-mode header, body.printing-mode nav,
+        body.printing-mode section:first-of-type, body.printing-mode button, body.printing-mode footer {
+          display: none !important;
+        }
+        body.printing-mode .report-page {
+          width: 210mm !important; min-height: 297mm !important; margin: 0 auto !important;
+          padding: 20mm 15mm !important; box-sizing: border-box !important;
+          page-break-after: always; page-break-inside: avoid;
+          background: white !important; box-shadow: none !important; border: none !important;
+          border-radius: 0 !important; font-size: 12pt !important; line-height: 1.5 !important;
+          color: black !important;
+        }
+        .report-page:last-child { page-break-after: auto; }
+        .report-title { font-size: 18pt !important; text-decoration: underline !important; }
+        .report-photos img {
+          height: 200px !important; object-fit: contain !important;
+        }
+        html, body { background: white !important; margin: 0 !important; padding: 0 !important; }
+      }
     </style>
-    ${stylesHTML}
   `;
 
   doc.open();
@@ -146,7 +208,8 @@ function doPrint(contentHTML, stylesHTML) {
     <html>
       <head>
         <title>Print Report</title>
-        ${allStyles}
+        ${stylesHTML}
+        ${customStyles}
       </head>
       <body class="printing-mode">
         ${contentHTML}
@@ -160,7 +223,7 @@ function doPrint(contentHTML, stylesHTML) {
 
   if (images.length === 0) {
     iframe.contentWindow.print();
-    setTimeout(() => document.body.removeChild(iframe), 500);
+    document.body.removeChild(iframe);
   } else {
     images.forEach(img => {
       if (img.complete) loaded++;
@@ -168,14 +231,14 @@ function doPrint(contentHTML, stylesHTML) {
         loaded++;
         if (loaded === images.length) {
           iframe.contentWindow.print();
-          setTimeout(() => document.body.removeChild(iframe), 500);
+          document.body.removeChild(iframe);
         }
       };
     });
 
     if (loaded === images.length) {
       iframe.contentWindow.print();
-      setTimeout(() => document.body.removeChild(iframe), 500);
+      document.body.removeChild(iframe);
     }
   }
 }
