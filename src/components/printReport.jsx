@@ -1,5 +1,5 @@
 import React from "react";
-import ReactDOM from "react-dom/client"; // ganti ReactDOMServer
+import ReactDOM from "react-dom/client"; // gunakan react-dom/client
 import ReportPreview from "./ReportPreview";
 import { fetchImageBase64 } from "./utils/fetchImageBase64";
 
@@ -133,7 +133,7 @@ async function convertImagesToBase64(root) {
 
 /**
  * Helper → render ke iframe lalu print
- * Tambahan parameter stylesHTML untuk inline CSS + link eksternal
+ * Tambahan: ambil juga CSS dari <link rel="stylesheet"> pakai URL absolut
  */
 function doPrint(contentHTML, stylesHTML) {
   const iframe = document.createElement("iframe");
@@ -145,9 +145,13 @@ function doPrint(contentHTML, stylesHTML) {
 
   const doc = iframe.contentWindow.document;
 
-  // 🔑 Tambahkan juga semua <link rel="stylesheet"> dari head
+  // 🔑 Ambil semua CSS link dan ubah jadi absolute path
   const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-    .map(l => l.outerHTML)
+    .map(l => {
+      const href = l.getAttribute("href");
+      const absHref = new URL(href, window.location.origin).href;
+      return `<link rel="stylesheet" href="${absHref}">`;
+    })
     .join("\n");
 
   doc.open();
