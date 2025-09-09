@@ -1,7 +1,8 @@
 import React from "react";
-import ReactDOM from "react-dom/client"; // gunakan react-dom/client
+import ReactDOM from "react-dom/client";
 import ReportPreview from "./ReportPreview";
 import { fetchImageBase64 } from "./utils/fetchImageBase64";
+import rawAppCss from "./rawAppCss";   // ⬅️ tambahkan ini
 
 /**
  * PrintReport versi browser-friendly
@@ -52,13 +53,12 @@ export async function printReport(row) {
     </div>
   );
 
-  // tunggu next tick agar React render selesai
   await new Promise(resolve => setTimeout(resolve, 100));
 
   // 4️⃣ Convert <img> tambahan di HTML
   await convertImagesToBase64(tempDiv);
 
-  // 5️⃣ Ambil CSS inline (style tag)
+  // 5️⃣ Ambil style dari <style>
   const styles = Array.from(document.querySelectorAll("style"))
     .map(s => s.outerHTML)
     .join("\n");
@@ -85,16 +85,8 @@ export async function printReportFromDOM() {
   }
 
   const clone = reportContainer.cloneNode(true);
-  console.log("Clone dibuat. Jumlah img sebelum convert:", clone.querySelectorAll("img").length);
-
   await convertImagesToBase64(clone);
 
-  clone.querySelectorAll("img").forEach((img, i) =>
-    console.log(`img[${i}] src:`, img.src.substring(0, 100) + "...")
-  );
-  console.log("Jumlah img setelah convert:", clone.querySelectorAll("img").length);
-
-  // Ambil CSS inline
   const styles = Array.from(document.querySelectorAll("style"))
     .map(s => s.outerHTML)
     .join("\n");
@@ -112,16 +104,12 @@ async function convertImagesToBase64(root) {
     const src = img.getAttribute("src");
     if (src && !src.startsWith("data:")) {
       try {
-        console.log(`Convert img[${index}] src:`, src);
         const match = src.match(/[-\w]{25,}/);
         const fileId = match ? match[0] : null;
         if (fileId) {
           const base64 = await fetchImageBase64(fileId);
           if (base64) {
             img.setAttribute("src", base64);
-            console.log(`img[${index}] berhasil di-convert →`, base64.substring(0, 50) + "...");
-          } else {
-            console.warn(`fetchImageBase64 returned null untuk img[${index}]:`, src);
           }
         }
       } catch (e) {
@@ -133,7 +121,7 @@ async function convertImagesToBase64(root) {
 
 /**
  * Helper → render ke iframe lalu print
- * Tambahan: ambil juga CSS dari <link rel="stylesheet"> pakai URL absolut
+ * Versi fix: injek CSS langsung dari App.css (inline)
  */
 function doPrint(contentHTML, stylesHTML) {
   const iframe = document.createElement("iframe");
@@ -145,22 +133,20 @@ function doPrint(contentHTML, stylesHTML) {
 
   const doc = iframe.contentWindow.document;
 
-  // 🔑 Ambil semua CSS link dan ubah jadi absolute path
-  const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-    .map(l => {
-      const href = l.getAttribute("href");
-      const absHref = new URL(href, window.location.origin).href;
-      return `<link rel="stylesheet" href="${absHref}">`;
-    })
-    .join("\n");
+  // ⬅️ Satukan CSS dari App.css + style tag runtime
+  const allStyles = `
+    <style>
+      ${rawAppCss}
+    </style>
+    ${stylesHTML}
+  `;
 
   doc.open();
   doc.write(`
     <html>
       <head>
         <title>Print Report</title>
-        ${links}
-        ${stylesHTML}
+        ${allStyles}
       </head>
       <body class="printing-mode">
         ${contentHTML}
