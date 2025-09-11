@@ -282,7 +282,7 @@ function doPrint(contentHTML, stylesHTML) {
 
   /* Section */
   body.printing-mode .report-section {
-    margin-bottom: 8px !important;
+    margin-top: 16px !important;
     page-break-inside: avoid;
   }
 
