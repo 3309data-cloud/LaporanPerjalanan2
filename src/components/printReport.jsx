@@ -216,7 +216,9 @@ function doPrint(contentHTML, stylesHTML) {
         body.printing-mode section:first-of-type, body.printing-mode button, body.printing-mode footer {
           display: none !important;
         }
-
+  .report-page:first-child {
+    margin-top: -15mm !important;
+  }
   /* --- Sembunyikan elemen luar saat print --- */
   body.printing-mode aside,
   body.printing-mode header,
@@ -280,7 +282,7 @@ function doPrint(contentHTML, stylesHTML) {
 
   /* Section */
   body.printing-mode .report-section {
-    margin-bottom: 16px !important;
+    margin-bottom: 8px !important;
     page-break-inside: avoid;
   }
 

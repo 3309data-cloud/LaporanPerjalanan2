@@ -116,7 +116,7 @@
 
   /* Section */
   body.printing-mode .report-section {
-    margin-bottom: 16px !important;
+    margin-bottom: 8px !important;
     page-break-inside: avoid;
   }
 
