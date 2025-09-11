@@ -231,10 +231,24 @@ function doPrint(contentHTML, stylesHTML) {
         }
         html, body { background: white !important; margin: 0 !important; padding: 0 !important; }
       }
+        .signature-block {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 60px;
+  text-align: center;
+}
+.signature-space {
+  height: 100px; /* area tanda tangan */
+}
+.signature-name {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
     </style>
   `;
 
- doc.open();
+  doc.open();
   doc.write(`
     <html>
       <head>

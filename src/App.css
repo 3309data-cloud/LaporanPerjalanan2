@@ -1,87 +1,57 @@
 /* --- Default Layout (screen) --- */
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0;
-  text-align: left;
-  font-family: Arial, Helvetica, sans-serif;
-  background: #f3f4f6;
-}
+      #root {
+        margin: 0 auto;
+        padding: 0;
+        text-align: left;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f3f4f6;
+      }
+      .report-container { flex: 1; overflow-y: auto; padding-right: 0.5rem; }
+      .report-page {
+        width: 210mm; min-height: 280mm; padding: 20mm; margin: 0 auto 20px auto;
+        background: white; font-family: Arial, sans-serif; font-size: 12pt; line-height: 1.5;
+        color: black; box-shadow: 0 0 5px rgba(0,0,0,0.2); border-radius: 12px;
+      }
+      .report-title {
+        font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 10px;
+        text-transform: uppercase; text-decoration: underline;
+      }
+      .report-section { margin-top: 20px; margin-bottom: 1rem; }
+      .report-row { display: flex; margin-bottom: 4px; gap: 0.5rem; }
+      .report-label { font-weight: bold; min-width: 180px; text-align: left; }
+      .report-labelbawah { font-weight: bold; margin-bottom: 0.25rem; min-width: 180px; display: inline-block; }
+      .report-sep { margin-right: 8px; }
+      .report-value { flex: 1; display: table-cell; }
+      .multiline { white-space: pre-line; }
+      .report-photos {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 20px; flex-wrap: wrap;
+      }
+      .report-photos img {
+        width: 100%; max-height: 180px; object-fit: contain; 
+      }
 
-.report-container {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 0.5rem;
-}
-
-.report-page {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 1.5rem;
-}
-
-.report-title {
-  font-size: 1.25rem;
-  font-weight: bold;
+.signature-block {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
   text-align: center;
-  margin-bottom: 1rem;
 }
-
-.report-section {
-  margin-bottom: 1rem;
+.signature-space {
+  height: 60px; /* area tanda tangan */
 }
-
-.report-row {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
-}
-
-.report-label {
+.signature-name {
   font-weight: bold;
-  min-width: 180px;
+  text-decoration: underline;
 }
 
-.report-sep {
-  margin-right: 4px;
-}
-
-.report-value {
-  flex: 1;
-}
-
-.report-labelbawah {
-  font-weight: bold;
-  margin-bottom: 0.25rem;
-}
-
-.multiline {
-  white-space: pre-line;
-}
-
-.report-photos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.report-photos img {
-  max-width: 180px;
-  max-height: 150px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-}
 
 /* --- PRINT STYLES (DEBUG) --- */
 @media print {
-  @page {
-    size: A4 portrait;
-    margin: 20mm; /* margin dokumen resmi */
-  }
+        @page { size: A4 portrait; margin: 0mm; }
+        body.printing-mode aside, body.printing-mode header, body.printing-mode nav,
+        body.printing-mode section:first-of-type, body.printing-mode button, body.printing-mode footer {
+          display: none !important;
+        }
 
   /* --- Sembunyikan elemen luar saat print --- */
   body.printing-mode aside,
@@ -122,20 +92,12 @@
 
   /* Halaman laporan = A4 */
   body.printing-mode .report-page {
-    width: 210mm !important;
-    min-height: 297mm !important;
-    margin: 0 auto !important;
-    padding: 20mm 15mm !important;
-    box-sizing: border-box !important;
-    page-break-after: always;
-    page-break-inside: avoid;
-    background: white !important;
-    box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    font-size: 12pt !important;
-    line-height: 1.5 !important;
-    color: black !important;
+    width: 210mm !important; min-height: 290mm !important; margin: 0 auto !important;
+          padding: 10mm 15mm !important; box-sizing: border-box !important;
+          page-break-after: always; page-break-inside: avoid;
+          background: white !important; box-shadow: none !important; border: none !important;
+          border-radius: 0 !important; font-size: 12pt !important; line-height: 1.5 !important;
+          color: black !important;
   }
 
   body.printing-mode .report-page:last-child {
@@ -188,7 +150,6 @@
     font-weight: bold !important;
     margin-bottom: 8px !important;
     font-size: 12pt !important;
-    text-decoration: underline !important;
     color: black !important;
   }
 
@@ -202,20 +163,11 @@
 
   /* Foto kegiatan */
   body.printing-mode .report-photos {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 12px !important;
-    margin-top: 12px !important;
-    page-break-inside: avoid;
+display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 20px; flex-wrap: wrap;
   }
 
   body.printing-mode .report-photos img {
-    width: 200px !important;
-    height: 150px !important;
-    object-fit: cover !important;
-    border-radius: 6px !important;
-    border: 2px solid #333 !important;
-    page-break-inside: avoid;
+ max-height: 180px; object-fit: contain;
   }
 
   /* Background putih */
@@ -227,6 +179,20 @@
     width: 100% !important;
     height: auto !important;
   }
+   body.printing-mode .signature-block {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  text-align: center;
+}
+ body.printing-mode .signature-space {
+  height: 100px; /* area tanda tangan */
+}
+ body.printing-mode .signature-name {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
 }
 
 
