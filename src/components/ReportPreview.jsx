@@ -156,6 +156,14 @@ function ReportPreview({ row, forceBase64 = false }) {
                   <div className="ml-2 multiline">{kegiatan || "-"}</div>
                 </div>
 
+                <div className="report-section flex justify-end mt-16">
+                  <div className="text-center">
+                    <p className="font-medium">Pelaksana Perjalanan Dinas</p>
+                    <div className="h-24"></div> {/* area kosong untuk tanda tangan */}
+                    <p className="font-bold underline">{row["Nama"] || "-"}</p>
+                  </div>
+                </div>
+
                 {foto && (
                   <div className="report-section">
                     <p className="report-labelbawah">Foto Kegiatan</p>
