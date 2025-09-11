@@ -197,7 +197,7 @@ function doPrint(contentHTML, stylesHTML) {
         font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 10px;
         text-transform: uppercase; text-decoration: underline;
       }
-      .report-section { margin-top: 20px; margin-bottom: 1rem; }
+      .report-section { margin-top: 20px;}
       .report-row { display: flex; margin-bottom: 4px; gap: 0.5rem; }
       .report-label { font-weight: bold; min-width: 180px; text-align: left; }
       .report-labelbawah { font-weight: bold; margin-bottom: 0.25rem; min-width: 180px; display: inline-block; }
@@ -352,7 +352,7 @@ display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 20px; flex-
   text-align: center;
 }
  body.printing-mode .signature-space {
-  height: 100px; /* area tanda tangan */
+  height: 60px; /* area tanda tangan */
 }
  body.printing-mode .signature-name {
   font-weight: bold;

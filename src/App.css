@@ -186,7 +186,7 @@ display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 20px; flex-
   text-align: center;
 }
  body.printing-mode .signature-space {
-  height: 100px; /* area tanda tangan */
+  height: 60px; /* area tanda tangan */
 }
  body.printing-mode .signature-name {
   font-weight: bold;
