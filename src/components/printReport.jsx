@@ -211,7 +211,10 @@ function doPrint(contentHTML, stylesHTML) {
         width: 100%; max-height: 200px; object-fit: contain; 
       }
       @media print {
-        @page { size: A4 portrait; margin: 0mm; }
+        @page {
+  size: A4 portrait;
+  margin: 10mm 15mm;
+}
         body.printing-mode aside, body.printing-mode header, body.printing-mode nav,
         body.printing-mode section:first-of-type, body.printing-mode button, body.printing-mode footer {
           display: none !important;
@@ -266,6 +269,7 @@ function doPrint(contentHTML, stylesHTML) {
           color: black !important;
   }
 
+  
   body.printing-mode .report-page:last-child {
     page-break-after: avoid;
   }
@@ -359,6 +363,7 @@ display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 20px; flex-
   font-weight: bold;
   text-decoration: underline;
 }
+
 
     </style>
   `;

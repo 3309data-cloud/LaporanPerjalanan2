@@ -74,14 +74,17 @@
 @media print {
   body {
     background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
-  /* Hanya laporan yang muncul */
-  body * {
-    visibility: hidden;
-  }
-  .report-page, .report-page * {
-    visibility: visible;
+  /* Pastikan hanya report-page yang tampil */
+  body.printing-mode aside,
+  body.printing-mode header,
+  body.printing-mode nav,
+  body.printing-mode button,
+  body.printing-mode footer {
+    display: none !important;
   }
 
   .report-page {
@@ -91,22 +94,19 @@
     box-shadow: none !important;
     border: none !important;
     page-break-after: always;
-  }
-  .report-page:first-child {
-    margin-top: -15mm !important;
-  }
-  /* Hapus halaman kosong setelah laporan terakhir */
-  .report-page:last-child {
-    page-break-after: auto;
+    margin: 20mm auto 0 auto !important;
+    padding: 10mm 15mm !important;
+    background: white !important;
   }
 
-  aside, nav, button {
-    display: none !important;
+  .report-page:last-child {
+    page-break-after: avoid;
   }
 }
 
 /* Atur margin kertas saat print */
 @page {
-  size: A4;
-  margin: 0; /* hilangkan margin default printer */
+  size: A4 portrait;
+  margin: 20mm 17mm 20mm 17mm;
 }
+
