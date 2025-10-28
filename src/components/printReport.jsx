@@ -365,6 +365,198 @@ display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 20px; flex-
 }
 
 
+
+
+
+
+/* === umum === */
+.report-page {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 20mm 17mm 20mm 17mm; /* margin kiri-kanan 1.7cm, atas-bawah 2cm */
+  margin: auto;
+  background: #fff;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+  font-size: 12pt;
+  color: #000;
+}
+
+.report-title {
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 14pt;
+  text-transform: uppercase;
+}
+
+/* === tambahan style: boxed table mirip Word === */
+.boxed-section {
+  border: 1px solid #111;
+  padding: 0; /* hapus padding di luar tabel agar border tidak ganda */
+  margin-bottom: 12px;
+  box-sizing: border-box;
+  page-break-inside: avoid;
+}
+
+.boxed-section-title {
+  font-weight: bold;
+  padding: 6px;
+  border-bottom: 1px solid #111;
+  text-transform: uppercase;
+  margin: 0;
+  text-align: center;
+  background: transparent;
+}
+
+/* struktur tabel kotak di halaman A */
+.boxed-table {
+  width: 100%;
+  border-collapse: collapse; /* penting agar border menyatu */
+  table-layout: fixed;
+  font-size: 12pt;
+  border: none; /* hilangkan border ganda */
+}
+
+.boxed-table td {
+  border: 1px solid #111;
+  padding: 6px 8px;
+  vertical-align: top;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  height: 13mm;
+}
+/* nomor & teks agar sejajar rapi dalam satu sel */
+.cell-num {
+  vertical-align: top;
+  padding: 6px 8px;
+}
+
+.cell-num .num-label {
+  display: inline-block;
+  width: 18px; /* atur lebar angka */
+}
+
+.cell-num .num-text {
+  display: inline-block;
+  width: calc(100% - 20px);
+  vertical-align: top;
+}
+
+.boxed-table tr td:nth-child(1) {
+  width: 25%;
+}
+.boxed-table tr td:nth-child(2) {
+  width: 30%;
+}
+.boxed-table tr td:nth-child(3) {
+  width: 30%;
+}
+.boxed-table tr td:nth-child(4) {
+  width: 15%;
+  text-align: center;
+}
+
+/* --- pembagian kolom --- */
+.cell-num {
+  width: 26%;
+}
+
+.cell-content {
+  width: 29%;
+}
+
+.cell-small {
+  width: 9%;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* versi sebelumnya */
+.cell-left {
+  width: 210px;
+  font-weight: normal;
+}
+.cell-mid {
+  width: calc(100% - 210px - 120px);
+}
+.cell-right,
+.cell-right-small {
+  width: 120px;
+  text-align: center;
+  vertical-align: top;
+}
+
+/* small text inside right cell */
+.cell-small {
+  font-size: 10pt;
+  margin-top: 6px;
+}
+
+/* boxed content area for B, C, D */
+.boxed-content {
+  min-height: 120px;
+  border: 1px solid transparent; /* internal content area, border handled by parent */
+  padding: 8px;
+  background: transparent;
+}
+
+/* photos */
+.report-photos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.report-photo-img {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border: 1px solid #ddd;
+  background: #fff;
+  padding: 4px;
+}
+
+/* --- Catatan bagian bawah --- */
+.report-page ol {
+  margin-top: 4px;
+  margin-bottom: 0;
+  padding-left: 18px;
+}
+
+/* === Print mode === */
+@media print {
+  @page {
+    size: A4;
+    margin: 20mm 17mm 20mm 17mm;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background: #fff;
+  }
+
+  .report-page {
+    page-break-after: always;
+    box-shadow: none;
+  }
+
+  .boxed-section-title {
+    background: transparent !important;
+  }
+
+  .boxed-table td {
+    border: 1px solid #111 !important;
+  }
+
+  .report-photo-img {
+    border: none !important;
+  }
+}
+
+
+
     </style>
   `;
 
