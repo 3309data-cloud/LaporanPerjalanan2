@@ -1,6 +1,39 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../App.css";
 
+// 🔥 Cache global untuk foto
+const imageCache = window.__imageCache || (window.__imageCache = new Map());
+
+function DriveImage({ fileId, alt, onLoadingChange }) {
+  const [src, setSrc] = useState(imageCache.get(fileId) || null);
+
+  useEffect(() => {
+    if (!fileId) return;
+
+    if (imageCache.has(fileId)) {
+      setSrc(imageCache.get(fileId));
+      onLoadingChange?.(false);
+      return;
+    }
+
+    onLoadingChange?.(true);
+    const url = `https://script.google.com/macros/s/AKfycbxGvdoKSOvm2ZrykWCvcdNd-puOE5NeOejWdIieMIfOo-gPSmJxuymmNt38MX0H83hK/exec?id=${fileId}`;
+
+    fetch(url)
+      .then((res) => res.json())
+      .then(({ mime, data }) => {
+        const base64 = `data:${mime};base64,${data}`;
+        imageCache.set(fileId, base64);
+        setSrc(base64);
+      })
+      .catch((err) => console.error("❌ Gagal ambil foto:", err))
+      .finally(() => onLoadingChange?.(false));
+  }, [fileId]);
+
+  if (!src) return null;
+  return <img src={src} alt={alt} className="report-photo-img" />;
+}
+
 /** Utility */
 function formatFullDate(dateStr) {
   if (!dateStr) return "";
@@ -27,10 +60,15 @@ function capitalizeWord(str) {
 /** A4 batas tinggi konten efektif (px) */
 const PAGE_HEIGHT = 1000;
 
-/** Komponen utama laporan per kegiatan */
+/** PageABCD → halaman per kegiatan */
 function PageABCD({ row, kegiatanIndex }) {
   const containerRef = useRef(null);
   const [pages, setPages] = useState([]);
+  const [loadingCount, setLoadingCount] = useState(0);
+
+  const handleLoadingChange = (isLoading) => {
+    setLoadingCount((prev) => prev + (isLoading ? 1 : -1));
+  };
 
   useEffect(() => {
     const el = containerRef.current;
@@ -46,7 +84,6 @@ function PageABCD({ row, kegiatanIndex }) {
       const h = sec.offsetHeight + 18;
 
       if (currentHeight + h > PAGE_HEIGHT) {
-        // Jika bagian B masih bisa dipotong sebagian
         if (sec.classList.contains("section-b")) {
           const remaining = PAGE_HEIGHT - currentHeight - 40;
           const content = sec.querySelector(".boxed-content");
@@ -57,20 +94,15 @@ function PageABCD({ row, kegiatanIndex }) {
             const topContent = cloneTop.querySelector(".boxed-content");
             const bottomContent = cloneBottom.querySelector(".boxed-content");
 
-            // bagian atas
             topContent.style.height = remaining + "px";
             topContent.style.overflow = "hidden";
 
-            // bagian bawah = lanjutan
             const titleEl = cloneBottom.querySelector(".boxed-section-title");
-            if (titleEl) {
-              titleEl.textContent = "B. (Lanjutan) URUTAN KEGIATAN";
-            }
+            if (titleEl) titleEl.textContent = "B. (Lanjutan) URUTAN KEGIATAN";
 
             currentPage.push(cloneTop);
             result.push(currentPage);
 
-            // mulai halaman baru, kasih margin top
             cloneBottom.style.marginTop = "40px";
             currentPage = [cloneBottom];
             currentHeight = cloneBottom.offsetHeight + 18;
@@ -78,13 +110,9 @@ function PageABCD({ row, kegiatanIndex }) {
           }
         }
 
-        // simpan halaman penuh
         result.push(currentPage);
-
-        // mulai halaman baru: tambahkan marginTop ke section pertama
         const newSec = sec.cloneNode(true);
         newSec.style.marginTop = "40px";
-
         currentPage = [newSec];
         currentHeight = h;
       } else {
@@ -97,7 +125,6 @@ function PageABCD({ row, kegiatanIndex }) {
     setPages(result);
   }, [row, kegiatanIndex]);
 
-  /** Data kegiatan */
   const idx = kegiatanIndex;
   const desa = row[`Desa(${idx})`] || "";
   const kec = row[`Kecamatan(${idx})`] || "";
@@ -109,7 +136,14 @@ function PageABCD({ row, kegiatanIndex }) {
     : [];
 
   return (
-    <>
+    <div className="report-page" style={{ pageBreakAfter: "always", position: "relative" }}>
+      {loadingCount > 0 && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white bg-opacity-70">
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+          <p className="text-gray-700 text-sm font-medium">Memuat foto...</p>
+        </div>
+      )}
+
       <div ref={containerRef} style={{ display: "none" }}>
         {/* === A === */}
         <div className="boxed-section section-a">
@@ -176,7 +210,9 @@ function PageABCD({ row, kegiatanIndex }) {
             C. PEJABAT DAN TEMPAT YANG DIKUNJUNGI
           </div>
           <div className="boxed-content" style={{ minHeight: 80 }}>
-            {pejabat || "-"}
+            {pejabat.split("\n").map((line, i) => (
+              <div key={i}>{line || <br />}</div>
+            ))}
           </div>
         </div>
 
@@ -186,38 +222,29 @@ function PageABCD({ row, kegiatanIndex }) {
           <div className="boxed-content">
             <div className="report-photos">
               {fotoList.length === 0 && <div>- Tidak ada foto -</div>}
-              {fotoList.slice(0, 6).map((src, i) => (
-                <img
-                  key={i}
-                  src={src}
-                  alt={`Foto ${i + 1}`}
-                  className="report-photo-img"
-                />
-              ))}
+              {fotoList.slice(0, 6).map((link, i) => {
+                const match = link.match(/[-\w]{25,}/);
+                const fileId = match ? match[0] : null;
+                return fileId ? (
+                  <DriveImage
+                    key={i}
+                    fileId={fileId}
+                    alt={`Foto ${i + 1}`}
+                    onLoadingChange={handleLoadingChange}
+                  />
+                ) : null;
+              })}
             </div>
           </div>
         </div>
       </div>
 
-      {/* hasil render halaman */}
+      {/* Render halaman A4 */}
+      <div className="report-title">LAPORAN PERJALANAN DINAS</div>
       {pages.map((sectionList, pIdx) => (
-        <div
-          className="report-page"
-          key={pIdx}
-          style={{ marginTop: pIdx === 0 ? 0 : 40 }}
-        >
-          {pIdx === 0 && (
-            <h2 className="report-title">LAPORAN PERJALANAN DINAS</h2>
-          )}
-          {sectionList.map((sec, i) => (
-            <div
-              key={i}
-              dangerouslySetInnerHTML={{ __html: sec.outerHTML }}
-            ></div>
-          ))}
-        </div>
+        <div key={pIdx} dangerouslySetInnerHTML={{ __html: sectionList.map((sec) => sec.outerHTML).join("") }} />
       ))}
-    </>
+    </div>
   );
 }
 
