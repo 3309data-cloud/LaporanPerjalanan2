@@ -332,6 +332,15 @@ function doPrint(contentHTML, stylesHTML) {
     color: black !important;
   }
 
+    body.printing-mode .multilinebold {
+    white-space: pre-line !important;
+    font-size: 12pt !important;
+    line-height: 1.4 !important;
+    margin-left: 8px !important;
+    color: black !important;
+    font-weight: bold !important;
+  }
+
   /* Foto kegiatan */
   body.printing-mode .report-photos {
 display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 20px; flex-wrap: wrap;
@@ -427,12 +436,22 @@ display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 20px; flex-
   height: 13mm;
 }
 /* nomor & teks agar sejajar rapi dalam satu sel */
-cell-num { width: 20%; vertical-align: top; padding: 6px 8px; }
-.cell-num .num-label { display: inline-block; width: 18px; }
-.cell-num .num-text { display: inline-block; width: calc(100% - 20px); vertical-align: top; }
+.cell-num {
+  vertical-align: top;
+  padding: 6px 8px;
+}
 
-.cell-content { width: 29%; }
-.cell-small { width: 9%; text-align: center; vertical-align: middle; font-size: 10pt; margin-top: 6px; }
+.cell-num .num-label {
+  display: inline-block;
+  width: 18px; /* atur lebar angka */
+}
+
+.cell-num .num-text {
+  display: inline-block;
+  width: calc(100% - 20px);
+  vertical-align: top;
+}
+
 .boxed-table tr td:nth-child(1) {
   width: 25%;
 }
@@ -449,7 +468,7 @@ cell-num { width: 20%; vertical-align: top; padding: 6px 8px; }
 
 /* --- pembagian kolom --- */
 .cell-num {
-  width: 26%;
+  width: 20%;
 }
 
 .cell-content {
@@ -544,6 +563,12 @@ cell-num { width: 20%; vertical-align: top; padding: 6px 8px; }
   }
 }
 
+.boxed-content-bold {
+  border: 1px solid transparent;
+  padding: 8px;
+  background: transparent;
+  font: bold;
+}
 
 
     </style>

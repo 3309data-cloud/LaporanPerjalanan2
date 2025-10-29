@@ -175,6 +175,12 @@
   background: transparent;
 }
 
+.boxed-content-bold {
+  border: 1px solid transparent;
+  padding: 8px;
+  background: transparent;
+  font: bold;
+}
 
 
 /* --- Catatan / ordered list --- */
