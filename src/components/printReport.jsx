@@ -427,22 +427,12 @@ display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 20px; flex-
   height: 13mm;
 }
 /* nomor & teks agar sejajar rapi dalam satu sel */
-.cell-num {
-  vertical-align: top;
-  padding: 6px 8px;
-}
+cell-num { width: 20%; vertical-align: top; padding: 6px 8px; }
+.cell-num .num-label { display: inline-block; width: 18px; }
+.cell-num .num-text { display: inline-block; width: calc(100% - 20px); vertical-align: top; }
 
-.cell-num .num-label {
-  display: inline-block;
-  width: 18px; /* atur lebar angka */
-}
-
-.cell-num .num-text {
-  display: inline-block;
-  width: calc(100% - 20px);
-  vertical-align: top;
-}
-
+.cell-content { width: 29%; }
+.cell-small { width: 9%; text-align: center; vertical-align: middle; font-size: 10pt; margin-top: 6px; }
 .boxed-table tr td:nth-child(1) {
   width: 25%;
 }
