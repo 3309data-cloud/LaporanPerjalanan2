@@ -5,12 +5,13 @@ export default function Navbar() {
 
   // Map path ke judul
   const titleMap = {
-    "/": "Daftar Perjalanan",
+    "/": "Rekap",
+    "/daftarperjalanan": "Daftar Perjalanan",
     "/cetaklaporan": "Cetak Laporan",
     "/daftarsurvey": "Daftar Survey",
   };
 
-  const title = titleMap[location.pathname] || "Dashboard";
+  const title = titleMap[location.pathname] || "Rekap";
 
   return (
     <header className="bg-white shadow-md h-16 flex items-center px-6">

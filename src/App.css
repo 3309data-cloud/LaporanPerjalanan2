@@ -170,7 +170,6 @@
 .cell-right, .cell-right-small { width: 120px; text-align: center; vertical-align: top; }
 
 .boxed-content {
-  min-height: 120px;
   border: 1px solid transparent;
   padding: 8px;
   background: transparent;

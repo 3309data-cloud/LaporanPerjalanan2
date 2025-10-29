@@ -6,7 +6,8 @@ export default function Sidebar() {
   const menu = [
     // { name: "Dashboard", path: "/dashboard" },
     // { name: "Charts", path: "/charts" },
-    { name: "Daftar Perjalanan", path: "/" },
+    { name: "Rekap", path: "/" },
+    { name: "Daftar Perjalanan", path: "/daftarperjalanan" },
     { name: "Cetak Laporan", path: "/cetaklaporan" },
     { name: "Daftar Survey", path: "/daftarsurvey" },
   ];

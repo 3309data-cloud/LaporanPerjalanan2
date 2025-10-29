@@ -495,7 +495,6 @@ display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 20px; flex-
 
 /* boxed content area for B, C, D */
 .boxed-content {
-  min-height: 120px;
   border: 1px solid transparent; /* internal content area, border handled by parent */
   padding: 8px;
   background: transparent;

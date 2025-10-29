@@ -201,6 +201,13 @@ function PageABCD({ row, kegiatanIndex }) {
           <div className="boxed-section-title">
             B. URUTAN KEGIATAN (RINGKASAN HASIL)
           </div>
+            <div
+  className="boxed-content font-bold"
+  style={{ display: "inline-flex", gap: "4px", marginBottom: "2px" }}
+>
+  <span>{row["Tujuan Kegiatan"] || "-"}</span>
+  <span>{row["Nama Survei"] || "-"}</span>
+</div>
           <div className="boxed-content multiline">{kegiatan}</div>
         </div>
 
