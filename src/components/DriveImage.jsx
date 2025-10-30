@@ -1,55 +1,53 @@
-// DriveImage.jsx
+// 📁 src/components/DriveImage.jsx
 import React, { useEffect, useState } from "react";
+import { fetchImageBase64 } from "../utils/fetchImageBase64";
 
-function extractFileId(url) {
-  if (!url) return null;
-  const m = url.match(/[-\w]{25,}/); // cari pola fileId Google Drive
-  return m ? m[0] : null;
-}
+// 🔹 Cache global agar gambar tidak diambil berulang
+const imageCache = window.__imageCache || (window.__imageCache = new Map());
 
-export default function DriveImage({ driveUrl, alt = "", className, style }) {
-  const [src, setSrc] = useState(null);
-  const [error, setError] = useState(null);
+// 🔹 Tracker global agar bisa tunggu semua load (dipakai di handlePrintAll)
+window.__imageLoadTracker = window.__imageLoadTracker || new Map();
 
-  // ✅ Ganti dengan scriptUrl kamu
-  const scriptUrl = "https://script.google.com/macros/s/AKfycbyR8QZ5vOTelCnDy8ztkEF0lvKq977Z6TTbVFaW1As4adWt9MQMc-lB_txugACtyaBd/exec";
+export default function DriveImage({ fileId, alt, onLoadingChange }) {
+  const [src, setSrc] = useState(imageCache.get(fileId) || null);
 
   useEffect(() => {
-    let alive = true;
-    async function load() {
-      setError(null);
-      setSrc(null);
-      const fileId = extractFileId(driveUrl);
-      if (!fileId) {
-        setError("fileId tidak ditemukan");
-        return;
-      }
+    if (!fileId) return;
 
-      const cacheKey = `driveimg_${fileId}`;
-      const cached = sessionStorage.getItem(cacheKey);
-      if (cached) {
-        setSrc(cached);
-        return;
-      }
+    const key = `drive-${fileId}`;
 
-      try {
-        const url = `${scriptUrl}?fileId=${encodeURIComponent(fileId)}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        if (json.error) throw new Error(json.error);
-        const dataUrl = `data:${json.mime};base64,${json.data}`;
-        sessionStorage.setItem(cacheKey, dataUrl);
-        if (alive) setSrc(dataUrl);
-      } catch (err) {
-        if (alive) setError(err.message);
-      }
+    // Jika sudah di cache → tampilkan langsung
+    if (imageCache.has(fileId)) {
+      setSrc(imageCache.get(fileId));
+      onLoadingChange?.(false);
+      // Buat Promise resolved untuk tracker
+      window.__imageLoadTracker.set(key, Promise.resolve());
+      return;
     }
-    load();
-    return () => { alive = false; };
-  }, [driveUrl]);
 
-  if (error) return <div style={{ color: "crimson" }}>Foto gagal: {error}</div>;
-  if (!src) return <div style={{ minHeight: 80 }}>Memuat foto…</div>;
-  return <img src={src} alt={alt} className={className} style={style} />;
+    onLoadingChange?.(true);
+
+    // 🔹 Fetch gambar dan simpan promise di tracker
+    const loadPromise = fetchImageBase64(fileId)
+      .then((base64) => {
+        if (base64) {
+          imageCache.set(fileId, base64);
+          setSrc(base64);
+        }
+      })
+      .catch((err) => console.error("❌ Gagal ambil foto:", err))
+      .finally(() => {
+        onLoadingChange?.(false);
+        window.__imageLoadTracker.delete(key);
+      });
+
+    window.__imageLoadTracker.set(key, loadPromise);
+
+    return () => {
+      window.__imageLoadTracker.delete(key);
+    };
+  }, [fileId]);
+
+  if (!src) return null;
+  return <img src={src} alt={alt} className="report-photo-img" />;
 }

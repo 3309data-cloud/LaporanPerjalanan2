@@ -1,11 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
-import Dashboard from "./components/Dashboard";
-import Charts from "./components/Charts";
-import Tables from "./components/Tables";
-import ReportPage from "./components/ReportPage";
-import SurveyPage from "./components/SurveyPage";
+import Dashboard from "./pages/RekapPage";
+import Charts from "./pages/Charts";
+import Tables from "./pages/ListPage";
+import ReportPage from "./pages/ReportPage";
+import SurveyPage from "./pages/SurveyPage";
 
 function App() {
   return (

@@ -1,40 +1,20 @@
+// ========================================================
+// 📄 components/ReportPreview.jsx
+// ========================================================
 import React, { useEffect, useRef, useState } from "react";
 import "../App.css";
-
-// 🔥 Cache global untuk foto
+import { fetchImageBase64 } from "../utils/fetchImageBase64";
+import { printStyles } from "../styles/printStyles"; // ✅ tambahan agar preview ikut gaya cetak
+import DriveImage from "./DriveImage";
+// ========================================================
+// 🧩 Komponen untuk menampilkan foto dari Google Drive
+// ========================================================
 const imageCache = window.__imageCache || (window.__imageCache = new Map());
 
-function DriveImage({ fileId, alt, onLoadingChange }) {
-  const [src, setSrc] = useState(imageCache.get(fileId) || null);
 
-  useEffect(() => {
-    if (!fileId) return;
-
-    if (imageCache.has(fileId)) {
-      setSrc(imageCache.get(fileId));
-      onLoadingChange?.(false);
-      return;
-    }
-
-    onLoadingChange?.(true);
-    const url = `https://script.google.com/macros/s/AKfycbxGvdoKSOvm2ZrykWCvcdNd-puOE5NeOejWdIieMIfOo-gPSmJxuymmNt38MX0H83hK/exec?id=${fileId}`;
-
-    fetch(url)
-      .then((res) => res.json())
-      .then(({ mime, data }) => {
-        const base64 = `data:${mime};base64,${data}`;
-        imageCache.set(fileId, base64);
-        setSrc(base64);
-      })
-      .catch((err) => console.error("❌ Gagal ambil foto:", err))
-      .finally(() => onLoadingChange?.(false));
-  }, [fileId]);
-
-  if (!src) return null;
-  return <img src={src} alt={alt} className="report-photo-img" />;
-}
-
-/** Utility */
+// ========================================================
+// 🧠 Utility Lokal
+// ========================================================
 function formatFullDate(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr.split("/").reverse().join("-"));
@@ -47,20 +27,23 @@ function formatFullDate(dateStr) {
   });
   return `${hari}, ${tanggal}`;
 }
+
 function formatKecamatan(str) {
   if (!str) return "";
   const nama = str.replace(/^\d+\s*/, "").toLowerCase();
   return "Kecamatan " + nama.charAt(0).toUpperCase() + nama.slice(1);
 }
+
 function capitalizeWord(str) {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
-/** A4 batas tinggi konten efektif (px) */
-const PAGE_HEIGHT = 1000;
+// ========================================================
+// 📄 PageABCD – setiap kegiatan satu halaman (A4 split logic)
+// ========================================================
+const PAGE_HEIGHT = 1122; // ✅ A4 @96dpi agar konsisten dengan hasil print
 
-/** PageABCD → halaman per kegiatan */
 function PageABCD({ row, kegiatanIndex }) {
   const containerRef = useRef(null);
   const [pages, setPages] = useState([]);
@@ -70,7 +53,18 @@ function PageABCD({ row, kegiatanIndex }) {
     setLoadingCount((prev) => prev + (isLoading ? 1 : -1));
   };
 
+  // 💡 Tambahkan printStyles ke <head> agar preview sama dengan print
   useEffect(() => {
+    const styleEl = document.createElement("style");
+    styleEl.innerHTML = printStyles;
+    document.head.appendChild(styleEl);
+    return () => styleEl.remove();
+  }, []);
+
+  // 🔧 Hitung pembagian halaman setelah semua foto selesai dimuat
+  useEffect(() => {
+    if (loadingCount > 0) return;
+
     const el = containerRef.current;
     if (!el) return;
 
@@ -83,7 +77,9 @@ function PageABCD({ row, kegiatanIndex }) {
       const sec = sections[i];
       const h = sec.offsetHeight + 18;
 
+      // Jika ketinggian melebihi 1 halaman
       if (currentHeight + h > PAGE_HEIGHT) {
+        // Kasus khusus: potong Section B (lanjutan)
         if (sec.classList.contains("section-b")) {
           const remaining = PAGE_HEIGHT - currentHeight - 40;
           const content = sec.querySelector(".boxed-content");
@@ -94,7 +90,7 @@ function PageABCD({ row, kegiatanIndex }) {
             const topContent = cloneTop.querySelector(".boxed-content");
             const bottomContent = cloneBottom.querySelector(".boxed-content");
 
-            topContent.style.height = remaining + "px";
+            topContent.style.height = `${remaining}px`;
             topContent.style.overflow = "hidden";
 
             const titleEl = cloneBottom.querySelector(".boxed-section-title");
@@ -110,6 +106,7 @@ function PageABCD({ row, kegiatanIndex }) {
           }
         }
 
+        // Tambah halaman baru
         result.push(currentPage);
         const newSec = sec.cloneNode(true);
         newSec.style.marginTop = "40px";
@@ -123,8 +120,9 @@ function PageABCD({ row, kegiatanIndex }) {
 
     if (currentPage.length) result.push(currentPage);
     setPages(result);
-  }, [row, kegiatanIndex]);
+  }, [row, kegiatanIndex, loadingCount]);
 
+  // Ambil data dari baris
   const idx = kegiatanIndex;
   const desa = row[`Desa(${idx})`] || "";
   const kec = row[`Kecamatan(${idx})`] || "";
@@ -137,6 +135,7 @@ function PageABCD({ row, kegiatanIndex }) {
 
   return (
     <div className="report-page" style={{ pageBreakAfter: "always", position: "relative" }}>
+      {/* 🔄 Spinner overlay saat loading foto */}
       {loadingCount > 0 && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white bg-opacity-70">
           <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
@@ -144,6 +143,7 @@ function PageABCD({ row, kegiatanIndex }) {
         </div>
       )}
 
+      {/* Hidden container untuk kalkulasi layout */}
       <div ref={containerRef} style={{ display: "none" }}>
         {/* === A === */}
         <div className="boxed-section section-a">
@@ -201,9 +201,9 @@ function PageABCD({ row, kegiatanIndex }) {
           <div className="boxed-section-title">
             B. URUTAN KEGIATAN (RINGKASAN HASIL)
           </div>
-           <div className="boxed-content multilinebold" style={{ marginBottom: "2px" }}>
-  {row["Tujuan Kegiatan"] || "-"} {row["Nama Survei"] || "-"}
-</div>
+          <div className="boxed-content multilinebold" style={{ marginBottom: "2px" }}>
+            {row["Tujuan Kegiatan"] || "-"} {row["Nama Survei"] || "-"}
+          </div>
           <div className="boxed-content multiline">{kegiatan}</div>
         </div>
 
@@ -242,31 +242,38 @@ function PageABCD({ row, kegiatanIndex }) {
         </div>
       </div>
 
-      {/* Render halaman A4 */}
+      {/* === Render hasil split halaman === */}
       <div className="report-title">LAPORAN PERJALANAN DINAS</div>
       {pages.map((sectionList, pIdx) => (
-        <div key={pIdx} dangerouslySetInnerHTML={{ __html: sectionList.map((sec) => sec.outerHTML).join("") }} />
+        <div
+          key={pIdx}
+          dangerouslySetInnerHTML={{
+            __html: sectionList.map((sec) => sec.outerHTML).join(""),
+          }}
+        />
       ))}
     </div>
   );
 }
 
-/** Wrapper utama */
+// ========================================================
+// 📘 Komponen Utama
+// ========================================================
 export default function ReportPreview({ row }) {
   const kegiatanIndexes = [];
   for (let i = 1; i <= 5; i++) {
-    const desa = row[`Desa(${i})`];
-    const kec = row[`Kecamatan(${i})`];
-    const namaResponden = row[`Nama(${i})`];
-    const kegiatan = row[`Kegiatan(${i})`];
-    const foto = row[`Foto(${i})`];
-    if (desa || kec || namaResponden || kegiatan || foto) {
-      kegiatanIndexes.push(i);
-    }
+    const fields = [
+      row[`Desa(${i})`],
+      row[`Kecamatan(${i})`],
+      row[`Nama(${i})`],
+      row[`Kegiatan(${i})`],
+      row[`Foto(${i})`],
+    ];
+    if (fields.some(Boolean)) kegiatanIndexes.push(i);
   }
 
   return (
-    <div>
+    <div className="report-container printing-mode">
       {kegiatanIndexes.map((idx) => (
         <PageABCD key={idx} row={row} kegiatanIndex={idx} />
       ))}

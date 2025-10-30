@@ -1,4 +1,10 @@
-/* --- Default Layout (screen) --- */
+/* ========================================================================== */
+/* ✅ DIGUNAKAN DALAM APLIKASI (ReportPage, ReportResults, ReportPreview, dll) */
+/* ========================================================================== */
+
+/* ======================= */
+/* 🧱 LAYOUT DASAR APLIKASI */
+/* ======================= */
 #root {
   margin: 0 auto;
   padding: 0;
@@ -7,13 +13,14 @@
   background: #f3f4f6;
 }
 
+/* Kontainer utama hasil laporan (ReportResults & ReportPage) */
 .report-container {
   flex: 1;
   overflow-y: auto;
   padding-right: 0.5rem;
 }
 
-/* --- Tambahkan kelas preview-mode untuk layar supaya mirip print --- */
+/* Mode preview agar tampilan di layar mirip hasil print */
 .preview-mode .report-container {
   overflow: visible !important;
   max-width: 100% !important;
@@ -21,6 +28,9 @@
   background: white !important;
 }
 
+/* ============================= */
+/* 📄 LAYOUT HALAMAN (ReportPage) */
+/* ============================= */
 .report-page {
   width: 210mm;
   min-height: 280mm;
@@ -31,12 +41,12 @@
   font-size: 12pt;
   line-height: 1.5;
   color: black;
-  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
   border-radius: 12px;
 }
 
+/* Versi preview layar agar mirip print */
 .preview-mode .report-page {
-  /* Override untuk layar supaya mirip print */
   width: 210mm;
   min-height: 297mm;
   padding: 20mm 17mm;
@@ -48,6 +58,9 @@
   border-radius: 0;
 }
 
+/* ============================= */
+/* 🏷️ JUDUL & STRUKTUR LAPORAN  */
+/* ============================= */
 .report-title {
   font-size: 14pt;
   font-weight: bold;
@@ -62,6 +75,9 @@
   margin-bottom: 1rem;
 }
 
+/* ============================= */
+/* 📋 ISI LAPORAN (ReportResults) */
+/* ============================= */
 .report-row {
   display: flex;
   margin-bottom: 4px;
@@ -81,19 +97,25 @@
   display: inline-block;
 }
 
-.report-sep {
-  margin-right: 8px;
-}
-
 .report-value {
   flex: 1;
   display: table-cell;
 }
 
+/* Multiline teks (agar "\n" muncul sebagai enter) */
 .multiline {
   white-space: pre-line;
 }
 
+/* Versi bold multiline (ReportPreview bagian B) */
+.multilinebold {
+  white-space: pre-line;
+  font-weight: bold;
+}
+
+/* ============================= */
+/* 🖼️ FOTO LAPORAN (ReportPreview) */
+/* ============================= */
 .report-photos {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -101,28 +123,36 @@
   margin-top: 20px;
 }
 
-.report-photos img {
+.report-photos img,
+.report-photo-img {
   width: 100%;
   max-height: 180px;
   object-fit: contain;
+  border: none !important;
 }
 
-/* --- Signature --- */
+/* ============================= */
+/* ✍️ TANDA TANGAN (ReportPage)  */
+/* ============================= */
 .signature-block {
   display: flex;
   justify-content: flex-end;
   margin-top: 10px;
   text-align: center;
 }
+
 .signature-space {
-  height: 60px; /* area tanda tangan */
+  height: 60px;
 }
+
 .signature-name {
   font-weight: bold;
   text-decoration: underline;
 }
 
-/* === Boxed Table / Section === */
+/* ============================= */
+/* 📦 BOXED SECTION (ReportPreview) */
+/* ============================= */
 .boxed-section {
   border: 1px solid #111;
   padding: 0;
@@ -141,6 +171,22 @@
   background: transparent;
 }
 
+.boxed-content {
+  border: 1px solid transparent;
+  padding: 8px;
+  background: transparent;
+}
+
+.boxed-content-bold {
+  border: 1px solid transparent;
+  padding: 8px;
+  background: transparent;
+  font-weight: bold;
+}
+
+/* ============================= */
+/* 📊 TABEL DALAM BOX (Bagian A) */
+/* ============================= */
 .boxed-table {
   width: 100%;
   border-collapse: collapse;
@@ -157,42 +203,45 @@
   height: 13mm;
 }
 
-/* --- Cell layouts --- */
-.cell-num { width: 20%; vertical-align: top; padding: 6px 8px; }
-.cell-num .num-label { display: inline-block; width: 18px; }
-.cell-num .num-text { display: inline-block; width: calc(100% - 20px); vertical-align: top; }
-
-.cell-content { width: 29%; }
-.cell-small { width: 9%; text-align: center; vertical-align: middle; font-size: 10pt; margin-top: 6px; }
-
-.cell-left { width: 210px; font-weight: normal; }
-.cell-mid { width: calc(100% - 210px - 120px); }
-.cell-right, .cell-right-small { width: 120px; text-align: center; vertical-align: top; }
-
-.boxed-content {
-  border: 1px solid transparent;
-  padding: 8px;
-  background: transparent;
+/* Tambahan agar tabel "full-border" tampil konsisten */
+.full-border td,
+.full-border th {
+  border: 1px solid #111 !important;
 }
 
-.boxed-content-bold {
-  border: 1px solid transparent;
-  padding: 8px;
-  background: transparent;
-  font: bold;
+/* ============================= */
+/* 📑 SECTION SPESIFIK (A–D)     */
+/* ============================= */
+.section-a,
+.section-b,
+.section-c,
+.section-d {
+  page-break-inside: avoid;
+  margin-top: 18px; /* bagian B–D sebelumnya inline style */
 }
 
+/* Bagian C perlu minimal tinggi untuk tampilan rapi */
+.section-c .boxed-content {
+  min-height: 80px;
+}
 
-/* --- Catatan / ordered list --- */
+/* ============================= */
+/* 📑 CATATAN & LIST             */
+/* ============================= */
 .report-page ol {
   margin-top: 4px;
   margin-bottom: 0;
   padding-left: 18px;
 }
 
-/* === Print styles === */
+/* ============================= */
+/* 🖨️ PRINT STYLES               */
+/* ============================= */
 @media print {
-  @page { size: A4; margin: 20mm 17mm 20mm 17mm; }
+  @page {
+    size: A4;
+    margin: 20mm 17mm 20mm 17mm;
+  }
 
   body {
     -webkit-print-color-adjust: exact;
@@ -216,6 +265,59 @@
   .report-photo-img {
     border: none !important;
   }
+}
 
-  
+/* ========================================================================== */
+/* ⚠️ PERLU DICEK / MUNGKIN SUDAH TIDAK DIGUNAKAN                            */
+/* ========================================================================== */
+
+/* Sisa versi lama tabel sebelum boxed-table digunakan */
+.report-sep {
+  margin-right: 8px;
+}
+
+/* ⚠️ Digunakan di tabel A tapi bisa dioptimalkan jadi lebih ringkas.
+   - Masih dipakai di ReportPreview bagian tabel (cell-num, cell-content, dll)
+   - Jika layout stabil, sebaiknya pertahankan. */
+.cell-num {
+  width: 20%;
+  vertical-align: top;
+  padding: 6px 8px;
+}
+.cell-num .num-label {
+  display: inline-block;
+  width: 18px;
+}
+.cell-num .num-text {
+  display: inline-block;
+  width: calc(100% - 20px);
+  vertical-align: top;
+}
+
+.cell-content {
+  width: 29%;
+}
+.cell-small {
+  width: 9%;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 10pt;
+  margin-top: 6px;
+}
+
+/* Kemungkinan tidak aktif di layout terbaru */
+.cell-left {
+  width: 210px;
+  font-weight: normal;
+}
+
+.cell-mid {
+  width: calc(100% - 210px - 120px);
+}
+
+.cell-right,
+.cell-right-small {
+  width: 120px;
+  text-align: center;
+  vertical-align: top;
 }

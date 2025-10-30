@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { printReport } from "./printReport";
-import { useData } from "./DataContext";
+import { printReport } from "../components/printReport";
+import { useData } from "../context/DataContext";
 
 function ReportTable() {
   const data = useData();
