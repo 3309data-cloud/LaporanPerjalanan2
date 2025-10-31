@@ -87,13 +87,17 @@ export function useData() {
  */
 function normalizeText(str) {
   if (!str) return "";
+  
   return str
-    .toLowerCase()
     .split(" ")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .map((w) => {
+      if (w.length <= 3) return w; // kata ≤ 3 huruf tidak diubah
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    })
     .join(" ")
     .trim();
 }
+
 
 /**
  * 🧹 normalizeMultiline()
