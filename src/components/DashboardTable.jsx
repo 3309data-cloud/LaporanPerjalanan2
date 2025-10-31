@@ -5,6 +5,7 @@ import ReactDOM from "react-dom/client";
 import ReportPreview from "../components/ReportPreview";
 import { printStyles } from "../styles/printStyles";
 import { flushSync } from "react-dom";
+import { fetchImageBase64 } from "../utils/fetchImageBase64";
 
 const bulanNama = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -63,14 +64,27 @@ export default function DashboardTable() {
     return new Date(yyyy, mm - 1, dd);
   }
 
-  const handlePrint = async (row) => {
-    try {
-      setLoading(true);
-      await printReport(row);
-    } finally {
-      setLoading(false);
-    }
-  };
+const handlePrint = async (row) => {
+  try {
+    setLoading(true);
+    setProgress(0);
+
+    // Tampilkan progres bar awal
+    flushSync(() => setProgress(50)); // bisa set ke 50% sebagai placeholder
+
+    await printReport(row);
+
+    // Selesai, progres 100%
+    flushSync(() => setProgress(100));
+
+    // Tambahan delay kecil agar progres 100% terlihat
+    await new Promise(res => setTimeout(res, 200));
+  } finally {
+    setLoading(false);
+    setProgress(0);
+  }
+};
+
 
   // 🔹 Print semua row untuk survei + bulan modal
 // 🔹 Print semua row untuk survei + bulan modal
@@ -164,13 +178,12 @@ const handlePrintAll = async () => {
     });
     console.timeEnd("FILTER_ROWS");
 
-    console.log("Jumlah row yang akan dicetak:", rowsToPrint.length);
     if (!rowsToPrint.length) {
       alert("Tidak ada data yang akan dicetak!");
       throw new Error("rowsToPrint kosong");
     }
 
-    // 2️⃣ Buat container sementara untuk render React
+    // 2️⃣ Buat container sementara untuk render semua row sekaligus
     console.time("CREATE_TEMP");
     const tempDiv = document.createElement("div");
     tempDiv.style.position = "absolute";
@@ -196,11 +209,31 @@ const handlePrintAll = async () => {
     await Promise.all(Array.from(window.__imageLoadTracker.values()));
     console.timeEnd("WAIT_DRIVE_IMAGES");
 
-    console.log("✅ Semua gambar DriveImage siap:", tempDiv.querySelectorAll("img").length);
+    const imgs = Array.from(tempDiv.querySelectorAll("img"));
+    console.log("✅ Semua gambar DriveImage siap:", imgs.length);
 
-    // 5️⃣ Convert semua <img> di tempDiv ke Base64 (jika ada tambahan <img> non-DriveImage)
+    // 5️⃣ Convert semua <img> ke Base64 sambil update progres
     console.time("CONVERT_BASE64");
-    await convertImagesToBase64(tempDiv);
+    for (let i = 0; i < imgs.length; i++) {
+      const img = imgs[i];
+      if (img.src && !img.src.startsWith("data:")) {
+        try {
+          const match = img.src.match(/[-\w]{25,}/);
+          const fileId = match ? match[0] : null;
+          if (fileId && !window.__imageCache.has(fileId)) {
+            const base64 = await fetchImageBase64(fileId);
+            if (base64) window.__imageCache.set(fileId, base64);
+            img.src = window.__imageCache.get(fileId) || img.src;
+          }
+        } catch (err) {
+          console.error("Gagal convert img:", img.src, err);
+        }
+      }
+
+      // 🔹 Update progres per gambar, beri waktu render React
+      flushSync(() => setProgress(Math.round(((i + 1) / imgs.length) * 100)));
+      await new Promise(r => setTimeout(r, 10)); // biar progres bar muncul
+    }
     console.timeEnd("CONVERT_BASE64");
 
     // 6️⃣ Pastikan semua gambar siap
@@ -215,7 +248,7 @@ const handlePrintAll = async () => {
       .join("\n");
     console.timeEnd("GET_STYLES");
 
-    // 8️⃣ Buat iframe untuk print
+    // 8️⃣ Buat iframe tunggal untuk print semua row
     console.time("CREATE_IFRAME");
     const iframe = document.createElement("iframe");
     iframe.style.position = "absolute";
@@ -248,10 +281,7 @@ const handlePrintAll = async () => {
     await waitIframeImages(iframe);
     console.timeEnd("WAIT_IFRAME_IMAGES");
 
-    // Tambahan delay singkat agar browser render semua Base64
-    await new Promise((res) => setTimeout(res, 200));
-
-    // 11️⃣ Print
+    // 11️⃣ Print sekali untuk semua
     console.time("PRINT_WINDOW");
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
@@ -272,23 +302,31 @@ const handlePrintAll = async () => {
   }
 };
 
+
+
+
 // ================= Helper Functions =================
 
 
   return (
     <div className="relative">
-      {loading && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-40">
-          <div className="w-24 h-24 border-4 border-white border-t-transparent rounded-full animate-spin mb-4"></div>
-          <div className="w-64 h-4 bg-gray-200 rounded overflow-hidden">
-            <div
-              className="h-4 bg-blue-500"
-              style={{ width: `${progress}%`, transition: "width 0.2s" }}
-            ></div>
-          </div>
-          <span className="mt-2 text-white font-semibold">{progress > 0 ? `Mencetak... ${progress}%` : "Mencetak laporan..."}</span>
-        </div>
-      )}
+{loading && (
+  <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black bg-opacity-40 pointer-events-auto">
+    {/* Progres bar container */}
+    <div className="w-64">
+      <div className="w-full h-4 bg-gray-200 rounded overflow-hidden">
+        <div
+          className="h-4 bg-blue-500 transition-all duration-200"
+          style={{ width: `${progress}%` }}
+        ></div>
+      </div>
+      <div className="text-center text-white text-sm font-semibold mt-2">
+        {progress > 0 ? `Menyiapkan... ${progress}%` : "Menyiapkan laporan..."}
+      </div>
+    </div>
+  </div>
+)}
+
 
       <div className="overflow-x-auto">
         <table className="border border-gray-300 table-auto text-sm w-full">
