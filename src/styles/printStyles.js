@@ -46,7 +46,6 @@ export const printStyles = `
   text-align: center;
   margin-bottom: 10px;
   text-transform: uppercase;
-  text-decoration: underline;
 }
 
 .report-section {
@@ -285,7 +284,6 @@ export const printStyles = `
     font-weight: bold !important;
     text-align: center !important;
     margin-bottom: 20px !important;
-    text-decoration: underline !important;
     color: black !important;
   }
 
