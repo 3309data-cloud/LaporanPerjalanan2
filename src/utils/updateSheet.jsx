@@ -1,7 +1,7 @@
 // ✅ src/utils/updateSheet.js
 export async function updateSheet(id, column, value) {
   try {
-    const response = await fetch("http://localhost:8888/api/updateSheet", {
+    const response = await fetch("/api/updateSheet", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, column, value }),
