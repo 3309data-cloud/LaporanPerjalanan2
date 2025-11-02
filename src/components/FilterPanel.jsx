@@ -10,14 +10,28 @@ function FilterPanel({
   const { survei, kegiatan, nama, tanggal } = selected;
   const { setSurvei, setKegiatan, setNama, setTanggal } = setSelected;
 
-  const surveiOptions = getUniqueValues(data, () => true, "Nama Survei");
-  const kegiatanOptions = getUniqueValues(data, r => r["Nama Survei"] === survei, "Tujuan Kegiatan");
-  const namaOptions = getUniqueValues(data, r => r["Nama Survei"] === survei && r["Tujuan Kegiatan"] === kegiatan, "Nama");
-  const tanggalOptions = getUniqueValues(data, r => 
-    r["Nama Survei"] === survei && 
-    r["Tujuan Kegiatan"] === kegiatan && 
-    r["Nama"] === nama, 
-  "Tanggal Kunjungan");
+  // 🔹 Hanya data dengan status Aktif
+  const activeData = data.filter(r => (r["Ket"] || "Aktif") === "Aktif");
+
+  const surveiOptions = getUniqueValues(activeData, () => true, "Nama Survei");
+  const kegiatanOptions = getUniqueValues(
+    activeData,
+    r => r["Nama Survei"] === survei,
+    "Tujuan Kegiatan"
+  );
+  const namaOptions = getUniqueValues(
+    activeData,
+    r => r["Nama Survei"] === survei && r["Tujuan Kegiatan"] === kegiatan,
+    "Nama"
+  );
+  const tanggalOptions = getUniqueValues(
+    activeData,
+    r => 
+      r["Nama Survei"] === survei && 
+      r["Tujuan Kegiatan"] === kegiatan && 
+      r["Nama"] === nama, 
+    "Tanggal Kunjungan"
+  );
 
   return (
     <section className="bg-white p-4 rounded-xl shadow">

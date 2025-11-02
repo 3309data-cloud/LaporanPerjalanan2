@@ -5,6 +5,7 @@
 // 2️⃣ Memparsing CSV menggunakan PapaParse.
 // 3️⃣ Membersihkan & memformat data (normalisasi teks, tanggal).
 // 4️⃣ Menyediakan data global ke seluruh aplikasi melalui Context API.
+// 5️⃣ Menyediakan fungsi refreshData() untuk memuat ulang data global.
 // ========================================================
 
 import { createContext, useContext, useState, useEffect } from "react";
@@ -17,58 +18,84 @@ const SHEET_URL =
 // ========================================================
 // 🧩 Context Setup
 // ========================================================
-
 const DataContext = createContext();
 
-/**
- * 🔹 DataProvider
- * Komponen utama untuk mengambil dan menyediakan data ke seluruh app.
- */
 export function DataProvider({ children }) {
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // --------------------------------------------------------
-  // 🌀 Effect: Fetch dan parsing data dari Google Sheets
+  // 🔁 Fungsi utama untuk fetch dan parsing data
+  // --------------------------------------------------------
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      // 🔥 Tambahkan timestamp agar cache Google Sheet selalu di-bypass
+      const urlWithCacheBuster = `${SHEET_URL}&t=${Date.now()}`;
+
+      const res = await fetch(urlWithCacheBuster, { cache: "no-store" });
+      const csvText = await res.text();
+
+      const parsed = Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+      });
+
+      // 🧹 Format & normalisasi hasil parsing
+      const formatted = parsed.data.map((row) => {
+        let newRow = { ...row };
+
+        // ✍️ Normalisasi kolom teks utama
+        newRow["Nama"] = normalizeText(row["Nama"]);
+        newRow["Tujuan Kegiatan"] = normalizeText(row["Tujuan Kegiatan"]);
+        newRow["Nama Survei"] = normalizeText(row["Nama Survei"]);
+        newRow["Tanggal Kunjungan"] = formatDate(row["Tanggal Kunjungan"]);
+
+        // 🔁 Normalisasi data berulang (Nama(1..5), Kegiatan(1..5), dll)
+        for (let i = 1; i <= 5; i++) {
+          newRow[`Nama(${i})`] = normalizeMultiline(row[`Nama(${i})`]);
+          newRow[`Kegiatan(${i})`] = normalizeMultiline(row[`Kegiatan(${i})`]);
+          newRow[`Desa(${i})`] = normalizeText(row[`Desa(${i})`]);
+          newRow[`Kecamatan(${i})`] = normalizeText(row[`Kecamatan(${i})`]);
+        }
+
+        // 🔹 Tangani kolom status "Ket" agar sinkron persis dengan Sheet
+        newRow["Ket"] = row["Ket"]?.trim() ?? "";
+
+        return newRow;
+      });
+
+      setData(formatted);
+    } catch (error) {
+      console.error("❌ Gagal memuat data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --------------------------------------------------------
+  // 🌀 Muat data pertama kali saat komponen mount
   // --------------------------------------------------------
   useEffect(() => {
-    fetch(SHEET_URL)
-      .then((res) => res.text())
-      .then((csvText) => {
-        const parsed = Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
-        });
-
-        // 🧩 Format & normalisasi setiap baris data
-        const formatted = parsed.data.map((row) => {
-          let newRow = { ...row };
-
-          // ✍️ Normalisasi kolom teks utama
-          newRow["Nama"] = normalizeText(row["Nama"]);
-          newRow["Tujuan Kegiatan"] = normalizeText(row["Tujuan Kegiatan"]);
-          newRow["Nama Survei"] = normalizeText(row["Nama Survei"]);
-          newRow["Tanggal Kunjungan"] = formatDate(row["Tanggal Kunjungan"]);
-
-          // 🔁 Normalisasi data berulang (Nama(1..5), Kegiatan(1..5), dll)
-          for (let i = 1; i <= 5; i++) {
-            newRow[`Nama(${i})`] = normalizeMultiline(row[`Nama(${i})`]);
-            newRow[`Kegiatan(${i})`] = normalizeMultiline(row[`Kegiatan(${i})`]);
-            newRow[`Desa(${i})`] = normalizeText(row[`Desa(${i})`]);
-            newRow[`Kecamatan(${i})`] = normalizeText(row[`Kecamatan(${i})`]);
-          }
-
-          return newRow;
-        });
-
-        setData(formatted);
-      });
+    fetchData();
   }, []);
 
   // --------------------------------------------------------
-  // 📤 Return Provider dengan data siap pakai
+  // 🔁 Fungsi refreshData: bisa dipanggil dari komponen manapun
+  // --------------------------------------------------------
+  const refreshData = async () => {
+    console.log("🔄 Memuat ulang data dari Google Sheets (tanpa cache)...");
+    await fetchData();
+  };
+
+  // --------------------------------------------------------
+  // 📤 Return Provider dengan data & fungsi siap pakai
   // --------------------------------------------------------
   return (
-    <DataContext.Provider value={data}>{children}</DataContext.Provider>
+    <DataContext.Provider value={{ data, loading, refreshData }}>
+      {children}
+    </DataContext.Provider>
   );
 }
 
@@ -80,14 +107,8 @@ export function useData() {
 // ========================================================
 // 🧰 Helper Functions
 // ========================================================
-
-/**
- * ✨ normalizeText()
- * Membersihkan teks satu baris: lowercase → kapital di awal tiap kata.
- */
 function normalizeText(str) {
   if (!str) return "";
-  
   return str
     .split(" ")
     .map((w) => {
@@ -98,11 +119,6 @@ function normalizeText(str) {
     .trim();
 }
 
-
-/**
- * 🧹 normalizeMultiline()
- * Sama seperti normalizeText(), tapi mendukung teks dengan baris ganda.
- */
 function normalizeMultiline(str) {
   if (!str) return "";
   return str
@@ -118,10 +134,6 @@ function normalizeMultiline(str) {
     .join("\n");
 }
 
-/**
- * 📅 formatDate()
- * Mengubah string tanggal menjadi format lokal Indonesia (dd/mm/yyyy)
- */
 function formatDate(str) {
   if (!str) return "";
   const d = new Date(str);

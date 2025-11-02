@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { printReport } from "../components/printReport";
 import { useData } from "../context/DataContext";
+import { updateSheet } from "../utils/updateSheet";
 
 function ReportTable() {
-  const data = useData();
+  const { data, refreshData, loading: loadingData } = useData();
+
   const [filters, setFilters] = useState({
     survei: "",
     kegiatan: "",
@@ -11,7 +13,15 @@ function ReportTable() {
     tujuan: "",
     tanggal: "",
   });
-  const [loading, setLoading] = useState(false); // ✅ state spinner
+  const [loading, setLoading] = useState(false); // spinner print
+  const [updating, setUpdating] = useState(false); // spinner update status
+
+  // 🔹 State lokal untuk override status sementara
+  const [localStatus, setLocalStatus] = useState({});
+
+  if (loadingData) {
+    return <p className="p-4 text-gray-500">Memuat data...</p>;
+  }
 
   if (!data || data.length === 0) {
     return <p className="p-4 text-gray-500">Belum ada data kegiatan...</p>;
@@ -50,35 +60,80 @@ function ReportTable() {
       );
     })
     .sort((a, b) => {
-      // konversi tanggal ke Date
       const dateA = new Date(a["Tanggal Kunjungan"].split("/").reverse().join("-"));
       const dateB = new Date(b["Tanggal Kunjungan"].split("/").reverse().join("-"));
-
-      if (dateA.getTime() !== dateB.getTime()) {
-        return dateA - dateB; // urut naik berdasarkan tanggal
-      }
-
-      // kalau tanggal sama → urutkan berdasarkan nama
+      if (dateA.getTime() !== dateB.getTime()) return dateA - dateB;
       return a["Nama"].localeCompare(b["Nama"]);
     });
 
+  // 🔹 Fungsi ubah status
+  const handleEditStatus = async (row) => {
+    const current = localStatus[row["ID_Laporan"]] || row["Ket"]?.trim() || "Aktif";
+    const newStatus = current === "Aktif" ? "Hapus" : "Aktif";
+
+    const confirmChange = window.confirm(
+      `Apakah kamu yakin ingin mengubah status laporan ini menjadi "${newStatus}"?`
+    );
+    if (!confirmChange) return;
+
+    try {
+      setUpdating(true);
+      // 🔹 Update UI lokal langsung
+      setLocalStatus({ ...localStatus, [row["ID_Laporan"]]: newStatus });
+
+      const res = await updateSheet(row["ID_Laporan"], "Ket", newStatus);
+      console.log("updateSheet response:", res);
+
+      if (res.status === "ok" || res.status === "success") {
+        alert(`✅ ${res.message || "Status berhasil diperbarui!"}`);
+        // refresh data dari CSV publik
+        try {
+          await refreshData();
+        } catch (err) {
+          console.warn("⚠️ Refresh data gagal:", err);
+        }
+      } else {
+        alert(`❌ Gagal memperbarui: ${res.message || "Respons tidak valid"}`);
+        // rollback local status jika gagal
+        setLocalStatus({ ...localStatus, [row["ID_Laporan"]]: current });
+      }
+    } catch (err) {
+      console.error("❌ Error saat update status:", err);
+      alert(`❌ Terjadi kesalahan saat update status: ${err.message || "unknown"}`);
+      // rollback local status jika error
+      setLocalStatus({ ...localStatus, [row["ID_Laporan"]]: current });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handlePrint = async (row) => {
     try {
-      setLoading(true); // mulai spinner
+      setLoading(true);
       await printReport(row);
     } finally {
-      setLoading(false); // hentikan spinner setelah print
+      setLoading(false);
     }
   };
 
   return (
     <div className="relative">
-      {/* ✅ Spinner overlay */}
+      {/* Spinner print */}
       {loading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="flex flex-col items-center">
             <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
             <span className="mt-2 text-white font-semibold">Mencetak laporan...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Spinner update */}
+      {updating && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+            <span className="mt-2 text-yellow-300 font-semibold">Memperbarui status...</span>
           </div>
         </div>
       )}
@@ -96,111 +151,89 @@ function ReportTable() {
                 <th className="border p-2 text-center">Aksi</th>
               </tr>
               <tr className="bg-gray-50 sticky top-[38px] z-10">
-                <th className="border p-1">
-                  <input
-                    type="text"
-                    placeholder="Cari Survei"
-                    value={filters.survei}
-                    onChange={(e) =>
-                      setFilters({ ...filters, survei: e.target.value })
-                    }
-                    className="w-full p-1 border rounded text-xs"
-                  />
-                </th>
-                <th className="border p-1">
-                  <input
-                    type="text"
-                    placeholder="Cari Kegiatan"
-                    value={filters.kegiatan}
-                    onChange={(e) =>
-                      setFilters({ ...filters, kegiatan: e.target.value })
-                    }
-                    className="w-full p-1 border rounded text-xs"
-                  />
-                </th>
-                <th className="border p-1">
-                  <input
-                    type="text"
-                    placeholder="Cari Nama"
-                    value={filters.nama}
-                    onChange={(e) =>
-                      setFilters({ ...filters, nama: e.target.value })
-                    }
-                    className="w-full p-1 border rounded text-xs"
-                  />
-                </th>
-                <th className="border p-1">
-                  <input
-                    type="text"
-                    placeholder="Cari Tujuan"
-                    value={filters.tujuan}
-                    onChange={(e) =>
-                      setFilters({ ...filters, tujuan: e.target.value })
-                    }
-                    className="w-full p-1 border rounded text-xs"
-                  />
-                </th>
-                <th className="border p-1">
-                  <input
-                    type="text"
-                    placeholder="Cari Tanggal"
-                    value={filters.tanggal}
-                    onChange={(e) =>
-                      setFilters({ ...filters, tanggal: e.target.value })
-                    }
-                    className="w-full p-1 border rounded text-xs"
-                  />
-                </th>
+                {["survei", "kegiatan", "nama", "tujuan", "tanggal"].map((key) => (
+                  <th key={key} className="border p-1">
+                    <input
+                      type="text"
+                      placeholder={`Cari ${key}`}
+                      value={filters[key]}
+                      onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
+                      className="w-full p-1 border rounded text-xs"
+                    />
+                  </th>
+                ))}
                 <th className="border p-1"></th>
               </tr>
             </thead>
+
             <tbody>
               {filteredData.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan="6"
-                    className="border p-2 text-center text-gray-500 italic"
-                  >
+                  <td colSpan="6" className="border p-2 text-center text-gray-500 italic">
                     Tidak ada data yang cocok...
                   </td>
                 </tr>
               ) : (
-                filteredData.map((row, i) => {
-                  const tujuanList = [];
-                  for (let j = 1; j <= 5; j++) {
-                    const desa = row[`Desa(${j})`];
-                    let kec = row[`Kecamatan(${j})`];
-                    if (kec)
-                      kec =
-                        kec.length > 4 ? kec.substring(4).trim() : kec.trim();
-                    if (desa || kec)
-                      tujuanList.push([desa, kec].filter(Boolean).join(", "));
-                  }
+                filteredData
+                  .sort((a, b) => a.ID_Laporan.localeCompare(b.ID_Laporan))
+                  .map((row) => {
+                    const tujuanList = [];
+                    for (let j = 1; j <= 5; j++) {
+                      const desa = row[`Desa(${j})`];
+                      let kec = row[`Kecamatan(${j})`];
+                      if (kec) kec = kec.length > 4 ? kec.substring(4).trim() : kec.trim();
+                      if (desa || kec)
+                        tujuanList.push([desa, kec].filter(Boolean).join(", "));
+                    }
 
-                  return (
-                    <tr key={i} className="hover:bg-gray-50">
-                      <td className="border p-2">{row["Nama Survei"]}</td>
-                      <td className="border p-2">{row["Tujuan Kegiatan"]}</td>
-                      <td className="border p-2">{row["Nama"]}</td>
-                      <td className="border p-2">
-                        {tujuanList.map((t, idx) => (
-                          <div key={idx}>{t}</div>
-                        ))}
-                      </td>
-                      <td className="border p-2">
-                        {formatFullDate(row["Tanggal Kunjungan"])}
-                      </td>
-                      <td className="border p-2 text-center">
-                        <button
-                          onClick={() => handlePrint(row)}
-                          className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-                        >
-                          🖨️ Print
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
+                    const status = localStatus[row["ID_Laporan"]] || row["Ket"] || "Aktif";
+                    const statusColor =
+                      status === "Hapus"
+                        ? "text-red-600"
+                        : status === "Aktif"
+                        ? "text-green-600"
+                        : "text-gray-600";
+
+                    return (
+                      <tr key={row["ID_Laporan"]} className="hover:bg-gray-50">
+                        <td className="border p-2">{row["Nama Survei"]}</td>
+                        <td className="border p-2">{row["Tujuan Kegiatan"]}</td>
+                        <td className="border p-2">{row["Nama"]}</td>
+                        <td className="border p-2">
+                          {tujuanList.map((t, idx) => (
+                            <div key={idx}>{t}</div>
+                          ))}
+                        </td>
+                        <td className="border p-2">{formatFullDate(row["Tanggal Kunjungan"])}</td>
+                        <td className="border p-2 text-center">
+                          <div className="flex gap-2 justify-center">
+                            <button
+                              onClick={() => handlePrint(row)}
+                              className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                              title="Print Laporan"
+                            >
+                              🖨️
+                            </button>
+
+                            <button
+                              onClick={() => handleEditStatus(row)}
+                              className={`px-3 py-1 rounded hover:opacity-80 ${
+                                status === "Hapus"
+                                  ? "bg-green-500 text-white"
+                                  : "bg-red-500 text-white"
+                              }`}
+                              title={`Ubah status menjadi ${
+                                status === "Aktif" ? "Dihapus" : "Aktif"
+                              }`}
+                            >
+                              {status === "Hapus" ? "🔄" : "🗑️"}
+                            </button>
+                          </div>
+                          <div className={`text-xs mt-1 ${statusColor}`}>{status === "Hapus" ? "Dihapus" : "Aktif"}</div>
+                        </td>
+                      </tr>
+                    );
+                  })
               )}
             </tbody>
           </table>

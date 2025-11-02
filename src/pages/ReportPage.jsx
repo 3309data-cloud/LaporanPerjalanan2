@@ -5,7 +5,7 @@ import FilterPanel from "../components/FilterPanel";
 import ReportResults from "../components/ReportResults";
 
 function ReportPage() {
-  const data = useData();
+  const { data }  = useData();
 
   const [selectedSurvei, setSelectedSurvei] = useState("");
   const [selectedKegiatan, setSelectedKegiatan] = useState("");

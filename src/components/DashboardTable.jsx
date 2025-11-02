@@ -13,7 +13,7 @@ const bulanNama = [
 ];
 
 export default function DashboardTable() {
-  const data = useData();
+  const { data } = useData();
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -21,7 +21,8 @@ export default function DashboardTable() {
 
   const dashboardArray = useMemo(() => {
     const dash = {};
-    data.forEach(row => {
+    const aktifData = data.filter(row => row["Ket"]?.toLowerCase() === "aktif");
+    aktifData.forEach(row => {
       const namaSurvei = row["Nama Survei"];
       const pelaksana = row["Nama"];
       const tanggalStr = row["Tanggal Kunjungan"];
