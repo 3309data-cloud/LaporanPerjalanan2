@@ -50,7 +50,7 @@ export async function printReport(row) {
     })
   );
 
-  // 3️⃣ Render sementara ke elemen hidden tapi tetap dihitung layout
+  // 3️⃣ Render sementara ke elemen hidden agar layout dihitung
   const tempDiv = document.createElement("div");
   tempDiv.style.position = "fixed";
   tempDiv.style.opacity = "0";
@@ -66,10 +66,9 @@ export async function printReport(row) {
     </div>
   );
 
-  // 4️⃣ Tunggu dua frame untuk memastikan semua layout selesai
+  // 4️⃣ Tunggu dua frame untuk memastikan layout selesai
   await new Promise(requestAnimationFrame);
   await new Promise(requestAnimationFrame);
-  console.log("DEBUG: Render ReportPreview selesai, tunggu 200ms tambahan");
   await new Promise((resolve) => setTimeout(resolve, 200));
 
   // 5️⃣ Pastikan semua img jadi base64
@@ -83,7 +82,7 @@ export async function printReport(row) {
     .join("\n");
   console.log("DEBUG: Styles diambil, total length =", styles.length);
 
-  // 7️⃣ Lakukan print
+  // 7️⃣ Lakukan print menggunakan window.open
   console.log("DEBUG: Panggil doPrint");
   await doPrint(tempDiv.innerHTML, styles);
 
@@ -143,20 +142,16 @@ export async function convertImagesToBase64(root) {
 
 async function doPrint(contentHTML, stylesHTML) {
   console.log("DEBUG: doPrint START");
-  const iframe = document.createElement("iframe");
-  iframe.style.position = "fixed";
-  iframe.style.top = "0";
-  iframe.style.left = "0";
-  iframe.style.width = "1px";
-  iframe.style.height = "1px";
-  iframe.style.opacity = "0";
-  iframe.style.border = "0";
-  document.body.appendChild(iframe);
 
-  const doc = iframe.contentWindow.document;
+  // Buka tab baru untuk print (lebih stabil di mobile)
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    alert("⚠️ Gagal membuka jendela print. Pastikan popup tidak diblokir.");
+    return;
+  }
 
-  doc.open();
-  doc.write(`
+  printWindow.document.open();
+  printWindow.document.write(`
     <html>
       <head>
         <title>Print Report</title>
@@ -168,11 +163,10 @@ async function doPrint(contentHTML, stylesHTML) {
       </body>
     </html>
   `);
-  doc.close();
+  printWindow.document.close();
 
-  const images = doc.querySelectorAll("img");
-
-  // Tunggu semua gambar load dulu
+  // tunggu semua gambar load sebelum print
+  const images = printWindow.document.querySelectorAll("img");
   await Promise.all(
     Array.from(images).map(
       (img) =>
@@ -183,7 +177,9 @@ async function doPrint(contentHTML, stylesHTML) {
     )
   );
 
-  iframe.contentWindow.print();
-  document.body.removeChild(iframe);
+  printWindow.focus();
+  printWindow.print();
+  printWindow.close();
+
   console.log("DEBUG: doPrint END");
 }
