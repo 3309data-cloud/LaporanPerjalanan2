@@ -273,7 +273,7 @@ export default function ReportPreview({ row }) {
   }
 
   return (
-    <div className="report-container printing-mode">
+    <div className="report-preview-container">
       {kegiatanIndexes.map((idx) => (
         <PageABCD key={idx} row={row} kegiatanIndex={idx} />
       ))}

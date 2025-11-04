@@ -1,3 +1,4 @@
+// components/ReportResults.jsx
 import React, { useState } from "react";
 import ReportPreview from "./ReportPreview";
 import { printReportFromDOM } from "./printReport";
@@ -27,6 +28,7 @@ function ReportResults({ filtered, selected }) {
 
   return (
     <section className="bg-white p-4 rounded-xl shadow flex flex-col">
+      {/* Header */}
       <div className="flex justify-between items-center mb-3 shrink-0">
         <h2 className="text-lg font-semibold">Hasil Laporan</h2>
         {filtered.length > 0 && (
@@ -48,7 +50,7 @@ function ReportResults({ filtered, selected }) {
         )}
       </div>
 
-      {/* Progress bar overlay */}
+      {/* Progress overlay */}
       {loading && (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black bg-opacity-40 pointer-events-auto">
           <div className="w-64">
@@ -59,16 +61,19 @@ function ReportResults({ filtered, selected }) {
               ></div>
             </div>
             <div className="text-center text-white text-sm font-semibold mt-2">
-              {progress > 0 ? `Menyiapkan... ${progress}%` : "Menyiapkan laporan..."}
+              {progress > 0
+                ? `Menyiapkan... ${progress}%`
+                : "Menyiapkan laporan..."}
             </div>
           </div>
         </div>
       )}
 
+      {/* Report Container */}
       {filtered.length > 0 ? (
         <div
           id="report-container"
-          className="report-container flex-1 overflow-y-auto pr-2 space-y-6"
+          className="report-container"
         >
           {filtered.map((row, i) => (
             <ReportPreview key={i} row={row} />

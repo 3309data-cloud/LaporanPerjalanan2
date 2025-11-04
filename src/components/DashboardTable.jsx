@@ -222,208 +222,278 @@ export default function DashboardTable() {
 
   // ================= Helper Functions =================
 
-  return (
-    <div className="relative">
-      {loading && (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black bg-opacity-40 pointer-events-auto">
-          <div className="w-64">
-            <div className="w-full h-4 bg-gray-200 rounded overflow-hidden">
-              <div
-                className="h-4 bg-blue-500 transition-all duration-200"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-            <div className="text-center text-white text-sm font-semibold mt-2">
-              {progress > 0 ? `Menyiapkan... ${progress}%` : "Menyiapkan laporan..."}
-            </div>
+return (
+  <div className="relative">
+    {/* 🔹 Loading overlay */}
+    {loading && (
+      <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black bg-opacity-40 pointer-events-auto">
+        <div className="w-64">
+          <div className="w-full h-4 bg-gray-200 rounded overflow-hidden">
+            <div
+              className="h-4 bg-blue-500 transition-all duration-200"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+          <div className="text-center text-white text-sm font-semibold mt-2">
+            {progress > 0
+              ? `Menyiapkan... ${progress}%`
+              : "Menyiapkan laporan..."}
           </div>
         </div>
-      )}
+      </div>
+    )}
 
-      <div className="overflow-x-auto">
-        <table className="border border-gray-300 table-auto text-sm w-full">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2 text-left" style={{ minWidth: "200px" }}>Nama Survei</th>
-              {bulanNama.map(bulan => (
-                <th key={bulan} className="border p-2 text-center" style={{ minWidth: "8ch" }}>
-                  {bulan}
-                </th>
+    {/* ================= DESKTOP TABLE ================= */}
+    <div className="hidden md:block overflow-x-auto">
+      <table className="border border-gray-300 table-auto text-sm w-full">
+        <thead className="bg-gray-200">
+          <tr>
+            <th
+              className="border p-2 text-left"
+              style={{ minWidth: "200px" }}
+            >
+              Nama Survei
+            </th>
+            {bulanNama.map((bulan) => (
+              <th
+                key={bulan}
+                className="border p-2 text-center"
+                style={{ minWidth: "8ch" }}
+              >
+                {bulan}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {dashboardArray.map((row) => (
+            <tr key={row.nama}>
+              <td className="border p-2">{row.nama}</td>
+              {bulanNama.map((bulan) => (
+                <td
+                  key={bulan}
+                  className="border p-2 text-center cursor-pointer hover:bg-gray-100 transition"
+                  onClick={() => {
+                    if (row.rincian[bulan]?.length > 0) {
+                      setSelected({
+                        nama: row.nama,
+                        bulan,
+                        rincian: row.rincian[bulan],
+                      });
+                      const init = {};
+                      row.rincian[bulan].forEach((item, idx) =>
+                        item.tanggal.forEach((tgl, i) => {
+                          init[`${idx}-${i}`] = true;
+                        })
+                      );
+                      setCheckedMap(init);
+                    }
+                  }}
+                >
+                  {row.bulan[bulan] > 0 ? row.bulan[bulan] : "-"}
+                </td>
               ))}
             </tr>
-          </thead>
-          <tbody>
-            {dashboardArray.map(row => (
-              <tr key={row.nama}>
-                <td className="border p-2">{row.nama}</td>
-                {bulanNama.map(bulan => (
-                  <td
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {/* ================= MOBILE CARD VIEW ================= */}
+    <div className="block md:hidden space-y-3 mt-2">
+      {dashboardArray.map((row) => (
+        <div
+          key={row.nama}
+          className="bg-white border border-gray-200 rounded-lg shadow-sm p-3"
+        >
+          <h3 className="text-base font-semibold mb-2 text-gray-800">
+            {row.nama}
+          </h3>
+          <div className="grid grid-cols-2 gap-1 text-sm">
+            {bulanNama.map(
+              (bulan) =>
+                row.bulan[bulan] > 0 && (
+                  <div
                     key={bulan}
-                    className="border p-2 text-center cursor-pointer hover:bg-gray-100 transition"
+                    className="flex justify-between px-2 py-1 bg-gray-50 rounded cursor-pointer hover:bg-gray-100 active:bg-gray-200"
                     onClick={() => {
-                      if (row.rincian[bulan]?.length > 0) {
-                        setSelected({ nama: row.nama, bulan, rincian: row.rincian[bulan] });
-                        const init = {};
-                        row.rincian[bulan].forEach((item, idx) =>
-                          item.tanggal.forEach((tgl, i) => {
-                            init[`${idx}-${i}`] = true;
-                          })
-                        );
-                        setCheckedMap(init);
-                      }
+                      setSelected({
+                        nama: row.nama,
+                        bulan,
+                        rincian: row.rincian[bulan],
+                      });
+                      const init = {};
+                      row.rincian[bulan].forEach((item, idx) =>
+                        item.tanggal.forEach((tgl, i) => {
+                          init[`${idx}-${i}`] = true;
+                        })
+                      );
+                      setCheckedMap(init);
                     }}
                   >
-                    {row.bulan[bulan] > 0 ? row.bulan[bulan] : "-"}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Modal rincian */}
-      {selected && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded shadow-lg w-[750px] max-h-[80vh] overflow-y-auto">
-            <h2 className="text-lg font-bold mb-3 text-center">{selected.nama} - {selected.bulan}</h2>
-
-            <table className="w-full text-sm border border-gray-300">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="border p-1 text-center">
-                    <input
-                      type="checkbox"
-                      checked={
-                        Object.keys(checkedMap).length > 0 &&
-                        Object.values(checkedMap).every(v => v)
-                      }
-                      onChange={(e) => {
-                        const all = {};
-                        Object.keys(checkedMap).forEach(k => (all[k] = e.target.checked));
-                        setCheckedMap(all);
-                      }}
-                    />
-                  </th>
-                  <th className="border p-1 text-center">Pelaksana</th>
-                  <th className="border p-1 text-center">Jumlah</th>
-                  <th className="border p-1 text-center">Tanggal</th>
-                  <th className="border p-1 text-center">Desa Tujuan</th>
-                  <th className="border p-1 text-center">Print</th>
-                </tr>
-              </thead>
-<tbody>
-  {selected.rincian.map((item, idx) =>
-    item.tanggal.map((tgl, i) => {
-      const key = `${idx}-${i}`;
-      const rowAsli = data.find((r) => {
-        const desa = r[`Desa(1)`] || "";
-        const kecamatan = (r[`Kecamatan(1)`] || "").replace(/^\d+\s*/, "");
-        const lokasiRow = desa + (kecamatan ? ", " + kecamatan : "");
-        return (
-          r["Nama Survei"] === selected.nama &&
-          r["Nama"] === item.pelaksana &&
-          r["Tanggal Kunjungan"] === tgl &&
-          lokasiRow === item.lokasi[i]
-        );
-      });
-
-      const checked = checkedMap[key] ?? true;
-
-      return (
-        <tr key={key}>
-          {/* ✅ Checkbox muncul di setiap baris tanggal */}
-          <td className="border p-1 text-center">
-            <input
-              type="checkbox"
-              checked={checked}
-              onChange={(e) => {
-                setCheckedMap({
-                  ...checkedMap,
-                  [key]: e.target.checked,
-                });
-              }}
-            />
-          </td>
-
-          {/* Kolom Pelaksana dan Jumlah tetap rowSpan */}
-          {i === 0 && (
-            <>
-              <td
-                rowSpan={item.tanggal.length}
-                className="border p-1 align-top font-medium"
-              >
-                {item.pelaksana}
-              </td>
-              <td
-                rowSpan={item.tanggal.length}
-                className="border p-1 align-top text-center"
-              >
-                {item.jumlah}
-              </td>
-            </>
-          )}
-
-          <td className="border p-1 text-center">{tgl}</td>
-          <td className="border p-1">{item.lokasi[i]}</td>
-          <td className="border p-1 text-center">
-            <button
-              className="text-gray-500 hover:text-gray-700 text-sm"
-              onClick={() => rowAsli && handlePrint(rowAsli)}
-            >
-              🖨️
-            </button>
-          </td>
-        </tr>
-      );
-    })
-  )}
-</tbody>
-
-            </table>
-
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                className="px-4 py-1 bg-gray-300 rounded hover:bg-gray-400 transition"
-                onClick={() => {
-                  const checkedKeys = Object.keys(checkedMap).filter(k => checkedMap[k]);
-                  const selectedRows = [];
-                  selected.rincian.forEach((item, idx) =>
-                    item.tanggal.forEach((tgl, i) => {
-                      if (checkedMap[`${idx}-${i}`]) {
-                        const r = data.find(rr => {
-                          const desa = rr[`Desa(1)`] || "";
-                          const kecamatan = (rr[`Kecamatan(1)`] || "").replace(/^\d+\s*/, "");
-                          const lokasiRow = desa + (kecamatan ? ", " + kecamatan : "");
-                          return (
-                            rr["Nama Survei"] === selected.nama &&
-                            rr["Nama"] === item.pelaksana &&
-                            rr["Tanggal Kunjungan"] === tgl &&
-                            lokasiRow === item.lokasi[i]
-                          );
-                        });
-                        if (r) selectedRows.push(r);
-                      }
-                    })
-                  );
-                  handlePrintAll(selectedRows);
-                }}
-              >
-                {Object.values(checkedMap).every(v => v)
-                  ? "🖨️ Print Semua"
-                  : "🖨️ Print Dipilih"}
-              </button>
-
-              <button
-                className="px-4 py-1 bg-gray-300 rounded hover:bg-gray-400 transition"
-                onClick={() => setSelected(null)}
-              >
-                Tutup
-              </button>
-            </div>
+                    <span>{bulan}</span>
+                    <span className="font-semibold text-blue-600">
+                      {row.bulan[bulan]}
+                    </span>
+                  </div>
+                )
+            )}
           </div>
         </div>
-      )}
+      ))}
     </div>
-  );
+
+    {/* ================= MODAL RINCIAN ================= */}
+    {selected && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-4 rounded shadow-lg w-[750px] max-h-[80vh] overflow-y-auto">
+          <h2 className="text-lg font-bold mb-3 text-center">
+            {selected.nama} - {selected.bulan}
+          </h2>
+
+          <table className="w-full text-sm border border-gray-300">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="border p-1 text-center">
+                  <input
+                    type="checkbox"
+                    checked={
+                      Object.keys(checkedMap).length > 0 &&
+                      Object.values(checkedMap).every((v) => v)
+                    }
+                    onChange={(e) => {
+                      const all = {};
+                      Object.keys(checkedMap).forEach(
+                        (k) => (all[k] = e.target.checked)
+                      );
+                      setCheckedMap(all);
+                    }}
+                  />
+                </th>
+                <th className="border p-1 text-center">Pelaksana</th>
+                <th className="border p-1 text-center">Jumlah</th>
+                <th className="border p-1 text-center">Tanggal</th>
+                <th className="border p-1 text-center">Desa Tujuan</th>
+                <th className="border p-1 text-center">Print</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selected.rincian.map((item, idx) =>
+                item.tanggal.map((tgl, i) => {
+                  const key = `${idx}-${i}`;
+                  const rowAsli = data.find((r) => {
+                    const desa = r[`Desa(1)`] || "";
+                    const kecamatan = (r[`Kecamatan(1)`] || "").replace(
+                      /^\d+\s*/,
+                      ""
+                    );
+                    const lokasiRow =
+                      desa + (kecamatan ? ", " + kecamatan : "");
+                    return (
+                      r["Nama Survei"] === selected.nama &&
+                      r["Nama"] === item.pelaksana &&
+                      r["Tanggal Kunjungan"] === tgl &&
+                      lokasiRow === item.lokasi[i]
+                    );
+                  });
+
+                  const checked = checkedMap[key] ?? true;
+
+                  return (
+                    <tr key={key}>
+                      <td className="border p-1 text-center">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            setCheckedMap({
+                              ...checkedMap,
+                              [key]: e.target.checked,
+                            });
+                          }}
+                        />
+                      </td>
+
+                      {i === 0 && (
+                        <>
+                          <td
+                            rowSpan={item.tanggal.length}
+                            className="border p-1 align-top font-medium"
+                          >
+                            {item.pelaksana}
+                          </td>
+                          <td
+                            rowSpan={item.tanggal.length}
+                            className="border p-1 align-top text-center"
+                          >
+                            {item.jumlah}
+                          </td>
+                        </>
+                      )}
+
+                      <td className="border p-1 text-center">{tgl}</td>
+                      <td className="border p-1">{item.lokasi[i]}</td>
+                      <td className="border p-1 text-center">
+                        <button
+                          className="text-gray-500 hover:text-gray-700 text-sm"
+                          onClick={() => rowAsli && handlePrint(rowAsli)}
+                        >
+                          🖨️
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              className="px-4 py-1 bg-gray-300 rounded hover:bg-gray-400 transition"
+              onClick={() => {
+                const selectedRows = [];
+                selected.rincian.forEach((item, idx) =>
+                  item.tanggal.forEach((tgl, i) => {
+                    if (checkedMap[`${idx}-${i}`]) {
+                      const r = data.find((rr) => {
+                        const desa = rr[`Desa(1)`] || "";
+                        const kecamatan = (rr[`Kecamatan(1)`] || "").replace(
+                          /^\d+\s*/,
+                          ""
+                        );
+                        const lokasiRow =
+                          desa + (kecamatan ? ", " + kecamatan : "");
+                        return (
+                          rr["Nama Survei"] === selected.nama &&
+                          rr["Nama"] === item.pelaksana &&
+                          rr["Tanggal Kunjungan"] === tgl &&
+                          lokasiRow === item.lokasi[i]
+                        );
+                      });
+                      if (r) selectedRows.push(r);
+                    }
+                  })
+                );
+                handlePrintAll(selectedRows);
+              }}
+            >
+              {Object.values(checkedMap).every((v) => v)
+                ? "🖨️ Print Semua"
+                : "🖨️ Print Dipilih"}
+            </button>
+
+            <button
+              className="px-4 py-1 bg-gray-300 rounded hover:bg-gray-400 transition"
+              onClick={() => setSelected(null)}
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+);
+
 }

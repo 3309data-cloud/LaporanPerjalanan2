@@ -8,11 +8,23 @@
 }
 
 .report-container {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 0.5rem;
+  width: 100%;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
 }
 
+.report-preview-container {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  box-sizing: border-box;
+}
 /* --- Tambahkan kelas preview-mode untuk layar supaya mirip print --- */
 .preview-mode .report-container {
   overflow: visible !important;
@@ -21,18 +33,16 @@
   background: white !important;
 }
 
+/* Halaman (A4) yang responsive */
 .report-page {
-  width: 210mm;
-  min-height: 280mm;
-  padding: 20mm;
-  margin: 0 auto 20px auto;
+  width: 100%;             /* ikut parent */
+  max-width: 210mm;        /* tetap A4 di desktop */
+  aspect-ratio: 210 / 297; /* lebar:tinggi proporsional A4 */
+  padding: 2rem;           /* padding internal */
   background: white;
-  font-family: Arial, sans-serif;
-  font-size: 12pt;
-  line-height: 1.5;
-  color: black;
   box-shadow: 0 0 5px rgba(0,0,0,0.2);
   border-radius: 12px;
+  box-sizing: border-box;
 }
 
 .preview-mode .report-page {
@@ -180,7 +190,22 @@
   margin-bottom: 0;
   padding-left: 18px;
 }
-
+/* Mobile responsive */
+@media (max-width: 1200px) {
+  .report-page {
+    padding: 1.5rem;
+  }
+}
+@media (max-width: 900px) {
+  .report-page {
+    padding: 1rem;
+  }
+}
+@media (max-width: 600px) {
+  .report-page {
+    padding: 0.5rem;
+  }
+}
 /* === Print styles === */
 @media print {
   @page { size: A4; margin: 20mm 17mm 20mm 17mm; }
@@ -210,3 +235,5 @@
 
   
 }
+
+
