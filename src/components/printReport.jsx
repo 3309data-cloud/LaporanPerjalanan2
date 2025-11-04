@@ -52,11 +52,11 @@ export async function printReport(row) {
 
   // 3️⃣ Render sementara ke elemen hidden tapi tetap dihitung layout
   const tempDiv = document.createElement("div");
-  tempDiv.style.position = "absolute";
-  tempDiv.style.visibility = "hidden"; // lebih aman daripada left: -9999px
+  tempDiv.style.position = "fixed";
+  tempDiv.style.opacity = "0";
   tempDiv.style.top = "0";
   tempDiv.style.left = "0";
-  tempDiv.style.width = "100%"; // pastikan layout flex / block dihitung
+  tempDiv.style.width = "100%";
   document.body.appendChild(tempDiv);
 
   const root = ReactDOM.createRoot(tempDiv);
@@ -69,8 +69,8 @@ export async function printReport(row) {
   // 4️⃣ Tunggu dua frame untuk memastikan semua layout selesai
   await new Promise(requestAnimationFrame);
   await new Promise(requestAnimationFrame);
-  console.log("DEBUG: Render ReportPreview selesai, tunggu 100ms tambahan");
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  console.log("DEBUG: Render ReportPreview selesai, tunggu 200ms tambahan");
+  await new Promise((resolve) => setTimeout(resolve, 200));
 
   // 5️⃣ Pastikan semua img jadi base64
   console.log("DEBUG: convertImagesToBase64 START");
@@ -85,7 +85,7 @@ export async function printReport(row) {
 
   // 7️⃣ Lakukan print
   console.log("DEBUG: Panggil doPrint");
-  doPrint(tempDiv.innerHTML, styles);
+  await doPrint(tempDiv.innerHTML, styles);
 
   // 8️⃣ Bersihkan
   root.unmount();
@@ -108,10 +108,10 @@ export async function printReportFromDOM() {
     .map((s) => s.outerHTML)
     .join("\n");
 
-  doPrint(clone.innerHTML, styles);
+  await doPrint(clone.innerHTML, styles);
 }
 
-async function convertImagesToBase64(root) {
+export async function convertImagesToBase64(root) {
   const imgs = root.querySelectorAll("img");
   await Promise.all(
     Array.from(imgs).map(async (img, i) => {
@@ -141,12 +141,15 @@ async function convertImagesToBase64(root) {
   );
 }
 
-function doPrint(contentHTML, stylesHTML) {
+async function doPrint(contentHTML, stylesHTML) {
   console.log("DEBUG: doPrint START");
   const iframe = document.createElement("iframe");
-  iframe.style.position = "absolute";
-  iframe.style.width = "0";
-  iframe.style.height = "0";
+  iframe.style.position = "fixed";
+  iframe.style.top = "0";
+  iframe.style.left = "0";
+  iframe.style.width = "1px";
+  iframe.style.height = "1px";
+  iframe.style.opacity = "0";
   iframe.style.border = "0";
   document.body.appendChild(iframe);
 
@@ -168,30 +171,19 @@ function doPrint(contentHTML, stylesHTML) {
   doc.close();
 
   const images = doc.querySelectorAll("img");
-  let loaded = 0;
 
-  if (images.length === 0) {
-    iframe.contentWindow.print();
-    document.body.removeChild(iframe);
-  } else {
-    images.forEach((img) => {
-      if (img.complete) loaded++;
-      else
-        img.onload = img.onerror = () => {
-          loaded++;
-          if (loaded === images.length) {
-            iframe.contentWindow.print();
-            document.body.removeChild(iframe);
-          }
-        };
-    });
+  // Tunggu semua gambar load dulu
+  await Promise.all(
+    Array.from(images).map(
+      (img) =>
+        new Promise((resolve) => {
+          if (img.complete) resolve();
+          else img.onload = img.onerror = resolve;
+        })
+    )
+  );
 
-    if (loaded === images.length) {
-      iframe.contentWindow.print();
-      document.body.removeChild(iframe);
-    }
-  }
-
+  iframe.contentWindow.print();
+  document.body.removeChild(iframe);
   console.log("DEBUG: doPrint END");
 }
-export { convertImagesToBase64 };
