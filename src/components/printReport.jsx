@@ -82,7 +82,7 @@ export async function printReport(row) {
     .join("\n");
   console.log("DEBUG: Styles diambil, total length =", styles.length);
 
-  // 7️⃣ Lakukan print menggunakan window.open
+  // 7️⃣ Lakukan print menggunakan iframe (kompatibel mobile & desktop)
   console.log("DEBUG: Panggil doPrint");
   await doPrint(tempDiv.innerHTML, styles);
 
@@ -143,17 +143,28 @@ export async function convertImagesToBase64(root) {
 async function doPrint(contentHTML, stylesHTML) {
   console.log("DEBUG: doPrint START");
 
-  // Buka tab baru untuk print (lebih stabil di mobile)
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) {
-    alert("⚠️ Gagal membuka jendela print. Pastikan popup tidak diblokir.");
-    return;
-  }
+  // 🔥 Gunakan iframe tersembunyi (lebih kompatibel mobile & desktop)
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.top = "0";
+  iframe.style.left = "0";
+  iframe.style.width = "100%";
+  iframe.style.height = "100%";
+  iframe.style.border = "none";
+  iframe.style.opacity = "0";
+  iframe.style.pointerEvents = "none";
+  iframe.style.zIndex = "-1";
+  
+  document.body.appendChild(iframe);
 
-  printWindow.document.open();
-  printWindow.document.write(`
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
     <html>
       <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Print Report</title>
         ${stylesHTML}
         ${printStyles}
@@ -163,23 +174,49 @@ async function doPrint(contentHTML, stylesHTML) {
       </body>
     </html>
   `);
-  printWindow.document.close();
+  doc.close();
 
-  // tunggu semua gambar load sebelum print
-  const images = printWindow.document.querySelectorAll("img");
+  // Tunggu semua gambar load sebelum print
+  const images = doc.querySelectorAll("img");
   await Promise.all(
     Array.from(images).map(
       (img) =>
         new Promise((resolve) => {
-          if (img.complete) resolve();
-          else img.onload = img.onerror = resolve;
+          if (img.complete) {
+            resolve();
+          } else {
+            img.onload = resolve;
+            img.onerror = resolve;
+          }
         })
     )
   );
 
-  printWindow.focus();
-  printWindow.print();
-  printWindow.close();
+  // Tunggu sebentar untuk memastikan render selesai
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  console.log("DEBUG: Memanggil print dialog");
+
+  try {
+    // Focus iframe sebelum print
+    iframe.contentWindow.focus();
+    
+    // Panggil print
+    iframe.contentWindow.print();
+    
+    console.log("DEBUG: Print dialog dibuka");
+  } catch (error) {
+    console.error("ERROR saat print:", error);
+    alert("❌ Gagal membuka dialog print. Silakan coba lagi.");
+  }
+
+  // Bersihkan iframe setelah delay (beri waktu user untuk print/cancel)
+  setTimeout(() => {
+    if (document.body.contains(iframe)) {
+      document.body.removeChild(iframe);
+      console.log("DEBUG: iframe dibersihkan");
+    }
+  }, 1000);
 
   console.log("DEBUG: doPrint END");
 }
