@@ -378,7 +378,21 @@ return (
               </tr>
             </thead>
             <tbody>
-              {selected.rincian.map((item, idx) =>
+              {selected.rincian
+  .slice() // supaya tidak mengubah original array
+  .sort((a, b) => {
+    // 1. Urutkan pelaksana
+    const pelA = (a.pelaksana || "").toLowerCase();
+    const pelB = (b.pelaksana || "").toLowerCase();
+    if (pelA < pelB) return -1;
+    if (pelA > pelB) return 1;
+
+    // 2. Jika pelaksana sama → ambil tanggal paling awal untuk perbandingan
+    const tA = new Date(a.tanggal[0]);
+    const tB = new Date(b.tanggal[0]);
+    return tA - tB;
+  })
+  .map((item, idx) =>
                 item.tanggal.map((tgl, i) => {
                   const key = `${idx}-${i}`;
                   const rowAsli = data.find((r) => {
@@ -393,7 +407,8 @@ return (
                       r["Nama Survei"] === selected.nama &&
                       r["Nama"] === item.pelaksana &&
                       r["Tanggal Kunjungan"] === tgl &&
-                      lokasiRow === item.lokasi[i]
+                      lokasiRow === item.lokasi[i] &&
+                      r["Ket"] === "Aktif" 
                     );
                   });
 

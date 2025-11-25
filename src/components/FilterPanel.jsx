@@ -2,41 +2,45 @@
 import React from "react";
 import { getUniqueValues } from "../utils/filterUtils";
 
-function FilterPanel({
-  data,
-  selected,
-  setSelected,
-}) {
+function FilterPanel({ data, selected, setSelected }) {
   const { survei, kegiatan, nama, tanggal } = selected;
   const { setSurvei, setKegiatan, setNama, setTanggal } = setSelected;
 
   // 🔹 Hanya data dengan status Aktif
-  const activeData = data.filter(r => (r["Ket"] || "Aktif") === "Aktif");
+  const activeData = data.filter((r) => (r["Ket"] || "Aktif") === "Aktif");
 
-  const surveiOptions = getUniqueValues(activeData, () => true, "Nama Survei");
+  // 🔹 Ambil opsi & urutkan
+  const surveiOptions = getUniqueValues(activeData, () => true, "Nama Survei")
+    .sort();
+
   const kegiatanOptions = getUniqueValues(
     activeData,
-    r => r["Nama Survei"] === survei,
+    (r) => r["Nama Survei"] === survei,
     "Tujuan Kegiatan"
-  );
+  ).sort();
+
   const namaOptions = getUniqueValues(
     activeData,
-    r => r["Nama Survei"] === survei && r["Tujuan Kegiatan"] === kegiatan,
+    (r) =>
+      r["Nama Survei"] === survei &&
+      r["Tujuan Kegiatan"] === kegiatan,
     "Nama"
-  );
+  ).sort();
+
   const tanggalOptions = getUniqueValues(
     activeData,
-    r => 
-      r["Nama Survei"] === survei && 
-      r["Tujuan Kegiatan"] === kegiatan && 
-      r["Nama"] === nama, 
+    (r) =>
+      r["Nama Survei"] === survei &&
+      r["Tujuan Kegiatan"] === kegiatan &&
+      r["Nama"] === nama,
     "Tanggal Kunjungan"
-  );
+  ).sort((a, b) => new Date(a) - new Date(b)); // tanggal diurutkan ASC
 
   return (
     <section className="bg-white p-4 rounded-xl shadow">
       <h2 className="text-lg font-semibold mb-3">Filter Data</h2>
       <div className="grid gap-3 md:grid-cols-4">
+        
         {/* Survei */}
         <select
           value={survei}
@@ -99,6 +103,7 @@ function FilterPanel({
             <option key={i} value={item}>{item}</option>
           ))}
         </select>
+
       </div>
     </section>
   );

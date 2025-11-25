@@ -109,15 +109,50 @@ export function useData() {
 // ========================================================
 function normalizeText(str) {
   if (!str) return "";
+
+  const romanRegex =
+    /^(?=[MDCLXVI])M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/i;
+
+  const gelarList = [
+    "Dr", "Dr.",
+    "Ir", "Ir.",
+    "H", "H.",
+    "Hj", "Hj.",
+    "Prof", "Prof.",
+    "S.Pd", "S.Pd.",
+    "S.Kom", "S.Kom.",
+    "S.Si", "S.Si.",
+    "S.H", "S.H.",
+    "S.T", "S.T.",
+    "M.Pd", "M.Pd.",
+    "M.Si", "M.Si.",
+    "M.Kom", "M.Kom.",
+    "M.T", "M.T.",
+    "Ph.D",
+    "MBA",
+    "SE",
+    "SST", "S.ST", "S.ST.",
+    "PCL", "PML", "PPL"
+  ];
+
   return str
     .split(" ")
-    .map((w) => {
-      if (w.length <= 3) return w; // kata ≤ 3 huruf tidak diubah
+    .map(w => {
+      if (!w) return w;
+
+      // 🔹 Jika gelar → jangan ubah
+      if (gelarList.includes(w)) return w;
+
+      // 🔹 Jika angka romawi
+      if (romanRegex.test(w)) return w;
+
+      // 🔹 Normalisasi biasa
       return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
     })
     .join(" ")
     .trim();
 }
+
 
 function normalizeMultiline(str) {
   if (!str) return "";

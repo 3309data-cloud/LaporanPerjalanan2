@@ -260,17 +260,32 @@ function PageABCD({ row, kegiatanIndex }) {
 // 📘 Komponen Utama
 // ========================================================
 export default function ReportPreview({ row }) {
-  const kegiatanIndexes = [];
-  for (let i = 1; i <= 5; i++) {
-    const fields = [
-      row[`Desa(${i})`],
-      row[`Kecamatan(${i})`],
-      row[`Nama(${i})`],
-      row[`Kegiatan(${i})`],
-      row[`Foto(${i})`],
-    ];
-    if (fields.some(Boolean)) kegiatanIndexes.push(i);
+// Ambil nilai Ket global
+const ketValue = row["Ket"];
+
+// Kalau tidak aktif → jangan tampilkan apa pun
+if (!ketValue || ketValue.toLowerCase() !== "aktif") {
+  console.log("Row ini tidak aktif, tidak ada kegiatan yang ditampilkan.");
+  return [];
+}
+
+const kegiatanIndexes = [];
+
+for (let i = 1; i <= 5; i++) {
+  const fields = [
+    row[`Desa(${i})`],
+    row[`Kecamatan(${i})`],
+    row[`Nama(${i})`],
+    row[`Kegiatan(${i})`],
+    row[`Foto(${i})`],
+  ];
+
+  if (fields.some(Boolean)) {
+    kegiatanIndexes.push(i);
   }
+}
+
+console.log("HASIL kegiatanIndexes:", kegiatanIndexes);
 
   return (
     <div className="report-preview-container">
