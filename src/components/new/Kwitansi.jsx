@@ -10,6 +10,28 @@ export default function Kwitansi({ row }) {
   width: 103% !important;
   table-layout: fixed !important;
 }
+
+/* ⭐ FIX JARAK ANTAR BARIS WORD */
+.print-kwitansi p{
+  margin:0 !important;
+  line-height:1.2 !important;
+}
+
+/* Word kasih class ini ke semua paragraf */
+.print-kwitansi .MsoNormal{
+  margin:0 !important;
+  line-height:1.2 !important;
+}
+
+/* Ini penyebab spasi kosong tinggi */
+.print-kwitansi o\\:p{
+  display:none !important;
+}
+
+/* Word kasih span kosong tinggi */
+.print-kwitansi span{
+  line-height:1.2 !important;
+}
 </style>
 <body lang=EN-ID style='tab-interval:36.0pt;word-wrap:break-word'>
 
