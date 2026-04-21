@@ -47,7 +47,6 @@ export function DataProvider({ children }) {
         let newRow = { ...row };
 
         // ✍️ Normalisasi kolom teks utama
-        newRow["Nama"] = normalizeText(row["Nama"]);
         newRow["Tujuan Kegiatan"] = normalizeText(row["Tujuan Kegiatan"]);
         newRow["Nama Survei"] = normalizeText(row["Nama Survei"]);
         newRow["Tanggal Kunjungan"] = formatDate(row["Tanggal Kunjungan"]);
@@ -132,21 +131,33 @@ function normalizeText(str) {
     "MBA",
     "SE",
     "SST", "S.ST", "S.ST.",
-    "PCL", "PML", "PPL"
+    "PCL", "PML", "PPL",
+    "UTP", "PBI", "UPB", "UTL"
   ];
+
+  let inParentheses = false;
 
   return str
     .split(" ")
     .map(w => {
       if (!w) return w;
 
-      // 🔹 Jika gelar → jangan ubah
+      // 🔹 cek masuk kurung
+      if (w.includes("(")) inParentheses = true;
+
+      // 🔹 kalau dalam kurung → skip
+      if (inParentheses) {
+        if (w.includes(")")) inParentheses = false;
+        return w;
+      }
+
+      // 🔹 gelar
       if (gelarList.includes(w)) return w;
 
-      // 🔹 Jika angka romawi
+      // 🔹 angka romawi
       if (romanRegex.test(w)) return w;
 
-      // 🔹 Normalisasi biasa
+      // 🔹 normalisasi
       return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
     })
     .join(" ")

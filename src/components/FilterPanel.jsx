@@ -1,109 +1,89 @@
-// components/FilterPanel.jsx
-import React from "react";
+import React, { useMemo } from "react";
 import { getUniqueValues } from "../utils/filterUtils";
 
-function FilterPanel({ data, selected, setSelected }) {
-  const { survei, kegiatan, nama, tanggal } = selected;
-  const { setSurvei, setKegiatan, setNama, setTanggal } = setSelected;
+function FilterPanel({ data = [], selected = {}, onFilterChange }) {
+  const { survei = "", kegiatan = "", nama = "", tanggal = "" } = selected;
 
-  // 🔹 Hanya data dengan status Aktif
-  const activeData = data.filter((r) => (r["Ket"] || "Aktif") === "Aktif");
+  const activeData = useMemo(() => 
+    data.filter((r) => (r["Ket"] || "Aktif") === "Aktif"), 
+  [data]);
 
-  // 🔹 Ambil opsi & urutkan
-  const surveiOptions = getUniqueValues(activeData, () => true, "Nama Survei")
-    .sort();
+  // Options Logic
+  const surveiOptions = useMemo(() => 
+    getUniqueValues(activeData, () => true, "Nama Survei").sort(), [activeData]);
 
-  const kegiatanOptions = getUniqueValues(
-    activeData,
-    (r) => r["Nama Survei"] === survei,
-    "Tujuan Kegiatan"
-  ).sort();
+  const kegiatanOptions = useMemo(() => 
+    getUniqueValues(activeData, (r) => r["Nama Survei"] === survei, "Tujuan Kegiatan").sort(), [activeData, survei]);
 
-  const namaOptions = getUniqueValues(
-    activeData,
-    (r) =>
-      r["Nama Survei"] === survei &&
-      r["Tujuan Kegiatan"] === kegiatan,
-    "Nama"
-  ).sort();
+  const namaOptions = useMemo(() => 
+    getUniqueValues(activeData, (r) => r["Nama Survei"] === survei && r["Tujuan Kegiatan"] === kegiatan, "NamaCocok").sort(), [activeData, survei, kegiatan]);
 
-  const tanggalOptions = getUniqueValues(
-    activeData,
-    (r) =>
-      r["Nama Survei"] === survei &&
-      r["Tujuan Kegiatan"] === kegiatan &&
-      r["Nama"] === nama,
-    "Tanggal Kunjungan"
-  ).sort((a, b) => new Date(a) - new Date(b)); // tanggal diurutkan ASC
+  const tanggalOptions = useMemo(() => 
+    getUniqueValues(activeData, (r) => r["Nama Survei"] === survei && r["Tujuan Kegiatan"] === kegiatan && r["NamaCocok"] === nama, "Tanggal Kunjungan").sort(), [activeData, survei, kegiatan, nama]);
 
-  return (
-    <section className="bg-white p-4 rounded-xl shadow">
-      <h2 className="text-lg font-semibold mb-3">Filter Data</h2>
-      <div className="grid gap-3 md:grid-cols-4">
-        
-        {/* Survei */}
-        <select
-          value={survei}
-          onChange={(e) => {
-            setSurvei(e.target.value);
-            setKegiatan("");
-            setNama("");
-            setTanggal("");
-          }}
-          className="border p-2 rounded w-full"
+  // Handler khusus untuk reset anak-anaknya saat bapaknya berubah
+  const handleUpdate = (key, val) => {
+    onFilterChange(key, val);
+    if (key === "survei") { onFilterChange("kegiatan", ""); onFilterChange("nama", ""); onFilterChange("tanggal", ""); }
+    if (key === "kegiatan") { onFilterChange("nama", ""); onFilterChange("tanggal", ""); }
+    if (key === "nama") { onFilterChange("tanggal", ""); }
+  };
+
+return (
+    <section className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border grid gap-4 grid-cols-1 md:grid-cols-4">
+      {/* 1. Nama Survei */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[10px] font-bold text-blue-600 uppercase ml-1 tracking-widest">Nama Survei</label>
+        <select 
+          value={survei} 
+          onChange={(e) => handleUpdate("survei", e.target.value)} 
+          className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
         >
-          <option value="">PILIH NAMA SURVEI</option>
-          {surveiOptions.map((item, i) => (
-            <option key={i} value={item}>{item}</option>
-          ))}
+          <option value="">-- PILIH SURVEI --</option>
+          {surveiOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
+      </div>
 
-        {/* Kegiatan */}
-        <select
-          value={kegiatan}
-          onChange={(e) => {
-            setKegiatan(e.target.value);
-            setNama("");
-            setTanggal("");
-          }}
-          className="border p-2 rounded w-full"
-          disabled={!survei}
+      {/* 2. Kegiatan */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1 tracking-widest">Kegiatan</label>
+        <select 
+          disabled={!survei} 
+          value={kegiatan} 
+          onChange={(e) => handleUpdate("kegiatan", e.target.value)} 
+          className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-all"
         >
-          <option value="">PILIH KEGIATAN</option>
-          {kegiatanOptions.map((item, i) => (
-            <option key={i} value={item}>{item}</option>
-          ))}
+          <option value="">{!survei ? "PILIH SURVEI DULU" : "-- PILIH KEGIATAN --"}</option>
+          {kegiatanOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
+      </div>
 
-        {/* Nama */}
-        <select
-          value={nama}
-          onChange={(e) => {
-            setNama(e.target.value);
-            setTanggal("");
-          }}
-          className="border p-2 rounded w-full"
-          disabled={!kegiatan}
+      {/* 3. Nama */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1 tracking-widest">Nama Pelaksana</label>
+        <select 
+          disabled={!kegiatan} 
+          value={nama} 
+          onChange={(e) => handleUpdate("nama", e.target.value)} 
+          className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-all"
         >
-          <option value="">PILIH NAMA</option>
-          {namaOptions.map((item, i) => (
-            <option key={i} value={item}>{item}</option>
-          ))}
+          <option value="">{!kegiatan ? "PILIH KEGIATAN DULU" : "-- PILIH NAMA --"}</option>
+          {namaOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
+      </div>
 
-        {/* Tanggal */}
-        <select
-          value={tanggal}
-          onChange={(e) => setTanggal(e.target.value)}
-          className="border p-2 rounded w-full"
-          disabled={!nama}
+      {/* 4. Tanggal */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1 tracking-widest">Tanggal Kunjungan</label>
+        <select 
+          disabled={!nama} 
+          value={tanggal} 
+          onChange={(e) => handleUpdate("tanggal", e.target.value)} 
+          className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-all"
         >
-          <option value="">PILIH TANGGAL</option>
-          {tanggalOptions.map((item, i) => (
-            <option key={i} value={item}>{item}</option>
-          ))}
+          <option value="">{!nama ? "PILIH NAMA DULU" : "-- PILIH TANGGAL --"}</option>
+          {tanggalOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
-
       </div>
     </section>
   );

@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useData } from "../context/DataContext";
 import { printReport } from "../components/printReport";
 import { printStyles } from "../styles/printStyles";
+import { flushSync } from "react-dom";
 import { renderReportHTML } from "./renderReportHTML";
 import PrintOptionModal from "../components/PrintOptionModal";
 import { getPrintAvailability, needNoST } from "../utils/printEngine";
@@ -16,10 +17,9 @@ export default function DashboardTable() {
   const { data } = useData();
 
   // --- States ---
-  const currentYear = new Date().getFullYear().toString();
-  const [filterTahun, setFilterTahun] = useState(currentYear);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [checkedMap, setCheckedMap] = useState({});
   const [noSTModal, setNoSTModal] = useState(false);
   const [noSTValue, setNoSTValue] = useState("");
@@ -38,49 +38,12 @@ export default function DashboardTable() {
     return new Date(yyyy, mm - 1, dd);
   };
 
-const rincianSorted = useMemo(() => {
-  if (!selected || !selected.rincian) return [];
-
-  const sortTanggal = (tglStr) => {
-    const [d, m, y] = tglStr.split(/[-\/]/);
-    return new Date(y, m - 1, d);
-  };
-
-  return [...selected.rincian]
-    .sort((a, b) => a.pelaksana.localeCompare(b.pelaksana))
-    .map(group => ({
-      ...group,
-      items: (group.items || []).sort(
-        (a, b) => sortTanggal(a.tglStr) - sortTanggal(b.tglStr)
-      )
-    }));
-}, [selected]);
-
   const makeRowKey = (pelaksana, tgl, lokasi) => `${pelaksana}__${tgl}__${lokasi}`;
 
-  // --- Logic Filter Tahun Dinamis ---
-  const daftarTahun = useMemo(() => {
-    const setTahun = new Set();
-    data.forEach(row => {
-      const tgl = row["Tanggal Kunjungan"];
-      if (tgl) {
-        const parts = tgl.split("/");
-        if (parts.length === 3) setTahun.add(parts[2]);
-      }
-    });
-    if (setTahun.size === 0) setTahun.add(currentYear);
-    return Array.from(setTahun).sort((a, b) => b - a);
-  }, [data]);
-
-  // --- Logic Pemrosesan Data (Tersaring Tahun & Optimasi O(N)) ---
+  // --- Logic Pemrosesan Data (Optimasi O(N)) ---
   const dashboardArray = useMemo(() => {
     const dash = {};
-    const aktifData = data.filter(row => {
-      const isAktif = row["Ket"]?.toLowerCase() === "aktif";
-      const tgl = row["Tanggal Kunjungan"];
-      const tahunRow = tgl ? tgl.split("/")[2] : null;
-      return isAktif && tahunRow === filterTahun;
-    });
+    const aktifData = data.filter(row => row["Ket"]?.toLowerCase() === "aktif");
 
     aktifData.forEach(row => {
       const namaSurvei = row["Nama Survei"];
@@ -115,20 +78,48 @@ const rincianSorted = useMemo(() => {
     });
 
     return Object.values(dash);
-  }, [data, filterTahun]);
+  }, [data]);
 
-  // --- Print Handlers ---
+  // --- Availability & Validation Logic ---
+  const isDetailSPDLengkap = useMemo(() => {
+    const rows = printTarget ? [printTarget] : bulkRows || [];
+    return rows.length > 0 && rows.every(r =>
+      r.NoSPD && r.tglKwitansi && r.Program1 && r.Program2 &&
+      r.Kegiatan1 && r.Kegiatan2 && r.Komponen1 && r.Komponen2
+    );
+  }, [printTarget, bulkRows]);
+
+  const availability = useMemo(() => {
+    if (!printModal) return null;
+    if (printTarget) return getPrintAvailability(printTarget);
+    if (bulkRows?.length) {
+      return bulkRows.reduce((acc, row) => {
+        const a = getPrintAvailability(row);
+        return {
+          SPD: acc.SPD && a.SPD, OLD: acc.OLD && a.OLD,
+          Kwitansi: acc.Kwitansi && a.Kwitansi, Riil: acc.Riil && a.Riil,
+          Randis: acc.Randis && a.Randis, messages: a.messages
+        };
+      }, { SPD: true, OLD: true, Kwitansi: true, Riil: true, Randis: true });
+    }
+    return null;
+  }, [printModal, printTarget, bulkRows]);
+
+  // --- Core Print Engine ---
   const handlePrint = async (row, sections) => {
     setLoading(true);
+    setProgress(50);
     try {
       await printReport(row, sections);
+      setProgress(100);
     } finally {
-      setLoading(false);
+      setTimeout(() => { setLoading(false); setProgress(0); }, 300);
     }
   };
 
   const handlePrintAll = async (rows, sections) => {
     setLoading(true);
+    setProgress(10);
     const iframe = document.createElement("iframe");
     Object.assign(iframe.style, { position: "fixed", opacity: "0", zIndex: "-1" });
     document.body.appendChild(iframe);
@@ -151,12 +142,15 @@ const rincianSorted = useMemo(() => {
         if (img.complete) res(); else img.onload = img.onerror = res;
       })));
 
+      setProgress(90);
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
+      setProgress(100);
     } finally {
       setTimeout(() => {
         if (document.body.contains(iframe)) document.body.removeChild(iframe);
         setLoading(false);
+        setProgress(0);
       }, 1000);
     }
   };
@@ -167,16 +161,26 @@ const rincianSorted = useMemo(() => {
     rows.length === 1 ? await handlePrint(rows[0], sections) : await handlePrintAll(rows, sections);
   };
 
+  // --- Action Handlers ---
   const confirmPrint = async () => {
+    // 1. Kumpulkan baris yang akan diprint
     const rows = printTarget ? [printTarget] : bulkRows || [];
+
+    // 2. Jika user memilih opsi cetak 'Randis'
     if (printOption.Randis) {
+      // Jalankan engine untuk menyaring baris mana yang NoST-nya masih kosong
       const missingNoST = needNoST(rows);
+
+      // Jika ada setidaknya satu baris yang NoST-nya kosong
       if (missingNoST.length > 0) {
         setPendingRandisRows(missingNoST);
         setNoSTModal(true);
-        return;
+        return; // Berhenti untuk meminta input user
       }
     }
+
+    // 3. Jika Randis tidak dipilih, atau semua sudah punya NoST
+    // Langsung tutup modal opsi dan print
     setPrintModal(false);
     await doFinalPrint(rows);
   };
@@ -190,91 +194,67 @@ const rincianSorted = useMemo(() => {
         pendingRandisRows.forEach(r => { r.NoST = noSTValue; });
         setNoSTModal(false);
         setNoSTValue("");
-        setPrintModal(false);
+        setPrintModal(false); // Tutup modal print utama juga
         await doFinalPrint(printTarget ? [printTarget] : bulkRows);
+      } else {
+        alert("Gagal menyimpan NoST");
       }
+    } catch (e) {
+      alert("Error simpan NoST");
     } finally {
       setLoading(false);
     }
   };
 
-
-
   return (
-    <div className="relative p-4 md:p-0">
-      {/* 1. Filter Tahun Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-gray-800 uppercase tracking-tight">Rekap Perjalanan {filterTahun}</h2>
-          <p className="text-xs text-gray-500">Rekapitulasi perjalanan dinas aktif tahun {filterTahun}</p>
-        </div>
-
-        <div className="flex items-center gap-2 bg-white p-2 rounded-xl border shadow-sm">
-          <label className="text-[10px] font-bold text-gray-400 uppercase px-2">Pilih Tahun:</label>
-          <select 
-            value={filterTahun}
-            onChange={(e) => setFilterTahun(e.target.value)}
-            className="bg-gray-50 border-none text-sm font-bold text-blue-600 focus:ring-0 cursor-pointer rounded-lg"
-          >
-            {daftarTahun.map(th => (
-              <option key={th} value={th}>{th}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* 2. Loading Overlay */}
+    <div className="relative">
+      {/* 1. Progress Loading Overlay */}
       {loading && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center">
             <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-blue-600 border-solid"></div>
             <p className="mt-4 font-bold text-blue-800 tracking-wide shadow-sm">Menyiapkan Dokumen...</p>
+            <p className="mt-4 font-bold text-blue-800 tracking-wide shadow-sm">Mohon Tunggu Sebentar</p>
           </div>
         </div>
       )}
 
-      {/* 3. Desktop View (Table) */}
-      <div className="hidden md:block overflow-x-auto border rounded-xl bg-white shadow-sm">
+      {/* 2. Main Dashboard Table */}
+      <div className="hidden md:block overflow-x-auto border rounded-lg">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-100 border-b">
             <tr>
               <th className="p-3">Nama Survei</th>
-              {BULAN_NAMA.map(b => <th key={b} className="p-3 text-center">{b.substring(0,3)}</th>)}
+              {BULAN_NAMA.map(b => <th key={b} className="p-3 text-center">{b}</th>)}
             </tr>
           </thead>
           <tbody>
-            {dashboardArray.length > 0 ? (
-              dashboardArray.map(row => (
-                <tr key={row.nama} className="border-b hover:bg-gray-100 transition-colors">
-                  <td className="p-3 font-medium text-gray-800">{row.nama}</td>
-                  {BULAN_NAMA.map(bulan => (
-                    <td
-                      key={bulan}
-                      className={`p-3 text-center cursor-pointer ${row.bulan[bulan] > 0 ? "cursor-pointer hover:bg-blue-50" : "text-gray-300"}`}
-                      onClick={() => {
-                        if (row.rincian[bulan]?.length > 0) {
-                          setSelected({ nama: row.nama, bulan, rincian: row.rincian[bulan] });
-                          const initCheck = {};
-                          row.rincian[bulan].forEach(p => p.items.forEach(i => {
-                            initCheck[makeRowKey(p.pelaksana, i.tglStr, i.lokasi)] = true;
-                          }));
-                          setCheckedMap(initCheck);
-                        }
-                      }}
-                    >
-                      {row.bulan[bulan] || "-"}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            ) : (
-              <tr><td colSpan={13} className="p-10 text-center text-gray-400 italic">Tidak ada data untuk tahun {filterTahun}</td></tr>
-            )}
+            {dashboardArray.map(row => (
+              <tr key={row.nama} className="border-b hover:bg-gray-50">
+                <td className="p-3 font-medium">{row.nama}</td>
+                {BULAN_NAMA.map(bulan => (
+                  <td
+                    key={bulan}
+                    className="p-3 text-center cursor-pointer hover:bg-blue-50"
+                    onClick={() => {
+                      if (row.rincian[bulan]?.length > 0) {
+                        setSelected({ nama: row.nama, bulan, rincian: row.rincian[bulan] });
+                        const initCheck = {};
+                        row.rincian[bulan].forEach(p => p.items.forEach(i => {
+                          initCheck[makeRowKey(p.pelaksana, i.tglStr, i.lokasi)] = true;
+                        }));
+                        setCheckedMap(initCheck);
+                      }
+                    }}
+                  >
+                    {row.bulan[bulan] || "-"}
+                  </td>
+                ))}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
-
-      {/* 4. Mobile View (Cards) */}
       {/* 📱 2.5 Mobile View - Muncul hanya di layar kecil */}
       <div className="md:hidden space-y-4">
         {dashboardArray.map((row) => (
@@ -321,8 +301,8 @@ const rincianSorted = useMemo(() => {
         ))}
       </div>
 
-      {/* 5. Modal Rincian */}
-{selected && (
+      {/* 3. Modal Detail Rincian */}
+      {selected && (
         <div className="fixed inset-0 z-[50] flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
             <div className="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
@@ -353,7 +333,7 @@ const rincianSorted = useMemo(() => {
                   </tr>
                 </thead>
                 <tbody>
-                  {rincianSorted.map(pGroup => pGroup.items.map((item, idx) => {
+                  {selected.rincian.map(pGroup => pGroup.items.map((item, idx) => {
                     const key = makeRowKey(pGroup.pelaksana, item.tglStr, item.lokasi);
                     return (
                       <tr key={key} className="hover:bg-gray-50">
@@ -366,8 +346,8 @@ const rincianSorted = useMemo(() => {
                         </td>
                         {idx === 0 && (
                           <>
-                            <td className="border p-2 font-medium bg-white align-top" rowSpan={pGroup.items.length}>{pGroup.pelaksana}</td>
-                            <td className="border p-2 text-center bg-white align-top" rowSpan={pGroup.items.length}>{pGroup.jumlah}</td>
+                            <td className="border p-2 font-medium bg-white" rowSpan={pGroup.items.length}>{pGroup.pelaksana}</td>
+                            <td className="border p-2 text-center bg-white" rowSpan={pGroup.items.length}>{pGroup.jumlah}</td>
                           </>
                         )}
                         <td className="border p-2 text-center">{item.tglStr}</td>
@@ -406,7 +386,7 @@ const rincianSorted = useMemo(() => {
         </div>
       )}
 
-      {/* 6. External Modals */}
+      {/* 4. Modal Opsi Cetak & NoST Input */}
       <PrintOptionModal
         open={printModal}
         onClose={() => setPrintModal(false)}
@@ -418,19 +398,19 @@ const rincianSorted = useMemo(() => {
       />
 
       {noSTModal && (
-        <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm">
-            <h4 className="font-bold text-center mb-4 text-gray-800">Nomor Surat Tugas</h4>
+        <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-black/60">
+          <div className="bg-white p-6 rounded-xl shadow-2xl w-80">
+            <h4 className="font-bold text-center mb-4">Nomor Surat Tugas</h4>
             <input
-              className="w-full border-2 border-blue-50 p-4 rounded-xl focus:border-blue-500 outline-none transition font-mono text-sm"
+              className="w-full border-2 border-blue-100 p-3 rounded-lg focus:border-blue-500 outline-none transition"
               placeholder="Contoh: B-123/BPS/..."
               value={noSTValue}
               onChange={(e) => setNoSTValue(e.target.value)}
               autoFocus
             />
-            <div className="flex gap-2 mt-8">
-              <button className="flex-1 py-3 bg-gray-100 rounded-xl font-bold text-gray-500" onClick={() => setNoSTModal(false)}>Batal</button>
-              <button className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-100" onClick={submitNoST}>Simpan & Cetak</button>
+            <div className="flex gap-2 mt-6">
+              <button className="flex-1 py-2 bg-gray-100 rounded-lg" onClick={() => setNoSTModal(false)}>Batal</button>
+              <button className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-bold" onClick={submitNoST}>Simpan & Print</button>
             </div>
           </div>
         </div>

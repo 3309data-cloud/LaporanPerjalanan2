@@ -1,56 +1,66 @@
-// pages/ReportPage.jsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useData } from "../context/DataContext";
 import FilterPanel from "../components/FilterPanel";
 import ReportResults from "../components/ReportResults";
 
 function ReportPage() {
-  const { data }  = useData();
+  const { data } = useData();
 
-  const [selectedSurvei, setSelectedSurvei] = useState("");
-  const [selectedKegiatan, setSelectedKegiatan] = useState("");
-  const [selectedNama, setSelectedNama] = useState("");
-  const [selectedTanggal, setSelectedTanggal] = useState("");
+  // State tunggal untuk semua filter
+  const [filters, setFilters] = useState({
+    survei: "",
+    kegiatan: "",
+    nama: "",
+    tanggal: "",
+  });
 
-  const filtered = useMemo(() => {
-    return data.filter(
-      (row) =>
-        row["Nama Survei"] === selectedSurvei &&
-        row["Tujuan Kegiatan"] === selectedKegiatan &&
-        row["Nama"] === selectedNama &&
-        row["Tanggal Kunjungan"] === selectedTanggal
-    );
-  }, [data, selectedSurvei, selectedKegiatan, selectedNama, selectedTanggal]);
+  // Fungsi update yang stabil
+  const handleFilterChange = useCallback((key, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }, []);
 
-  return (
-    <main className="min-h-screen bg-gray-100 p-6 space-y-6">
+  // Filter data berdasarkan 4 kriteria (Strict Matching)
+  const filteredData = useMemo(() => {
+    if (!data) return [];
+    return data.filter((row) => {
+      return (
+        (!filters.survei || row["Nama Survei"] === filters.survei) &&
+        (!filters.kegiatan || row["Tujuan Kegiatan"] === filters.kegiatan) &&
+        (!filters.nama || row["NamaCocok"] === filters.nama) &&
+        (!filters.tanggal || row["Tanggal Kunjungan"] === filters.tanggal)
+      );
+    });
+  }, [data, filters]);
+
+// Di dalam ReportPage.jsx, bagian return:
+return (
+  <main className="min-h-screen bg-gray-50 p-2 sm:p-8 space-y-4 sm:space-y-6">
+    <div className="border-b pb-4 px-2 sm:px-0">
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight">
+        Review Laporan
+      </h1>
+      <p className="text-[10px] sm:text-sm text-gray-500 italic">
+        Lengkapi filter untuk melihat preview.
+      </p>
+    </div>
+
+    <div className="space-y-4">
       <FilterPanel
         data={data}
-        selected={{
-          survei: selectedSurvei,
-          kegiatan: selectedKegiatan,
-          nama: selectedNama,
-          tanggal: selectedTanggal,
-        }}
-        setSelected={{
-          setSurvei: setSelectedSurvei,
-          setKegiatan: setSelectedKegiatan,
-          setNama: setSelectedNama,
-          setTanggal: setSelectedTanggal,
-        }}
+        selected={filters}
+        onFilterChange={handleFilterChange}
       />
 
       <ReportResults
-        filtered={filtered}
-        selected={{
-          survei: selectedSurvei,
-          kegiatan: selectedKegiatan,
-          nama: selectedNama,
-          tanggal: selectedTanggal,
-        }}
+        filtered={filteredData}
+        selected={filters}
       />
-    </main>
-  );
+    </div>
+  </main>
+);
 }
 
 export default ReportPage;

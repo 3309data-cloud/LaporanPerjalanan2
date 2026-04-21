@@ -1,35 +1,60 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import ReportPreview from "../components/ReportPreview";
 import { fetchImageBase64 } from "../utils/fetchImageBase64";
 import { printStyles } from "../styles/printStyles";
+
+// Import Components
+import ReportPreview from "../components/ReportPreview";
+import ReportSPD from "../components/new/ReportSPD";
+import Kwitansi from "./new/Kwitansi";
+import PengeluaranRiil from "./new/PengeluaranRiil";
+import PernyataanRandis from "./new/PernyataanRandis";
 
 // 🔥 Cache global agar gambar tidak di-fetch berulang
 const imageCache = window.__imageCache || (window.__imageCache = new Map());
 
-export async function printReport(row) {
-  console.log("=== DEBUG: printReport START ===");
+const reportMap = {
+  OLD: ReportPreview,
+  SPD: ReportSPD,
+  Kwitansi: Kwitansi,
+  Riil: PengeluaranRiil,
+  Randis: PernyataanRandis
+};
 
-  // 1️⃣ Kumpulkan semua foto dari field Foto(1)...Foto(5)
+/**
+ * HELPER: Ekstraksi File ID Google Drive dari URL
+ */
+const getFileId = (url) => {
+  if (!url || typeof url !== "string") return null;
+  const match = url.match(/[-\w]{25,}/);
+  return match ? match[0] : null;
+};
+/**
+ * OPTIMALISASI: Mencetak laporan berdasarkan data mentah (ROW)
+ * Paling stabil untuk hasil profesional.
+ */
+export async function printReport(row, types = ["OLD"]) {
+  console.log("=== printReport: Executing ===");
+const needImages = types.includes("OLD");
+// 🔥 HANYA laporan OLD yang butuh foto
+if (needImages) {
+  console.log("Prefetch images for OLD report");
+
+  // 1. Ekstraksi Foto
   const fotos = [];
   for (let i = 1; i <= 5; i++) {
-    const fotoField = row[`Foto(${i})`];
-    if (fotoField) {
-      fotos.push(
-        ...fotoField.split(",").map((f) => f.trim()).filter(Boolean)
-      );
+    const field = row[`Foto(${i})`];
+    if (field) {
+      fotos.push(...field.split(",").map(f => f.trim()).filter(Boolean));
     }
   }
   row._fotos = fotos;
-  console.log("DEBUG: Semua foto dikumpulkan", row._fotos);
 
-  // 2️⃣ Konversi semua foto ke base64 (pakai cache)
+  // 2. Pre-fetch Images ke Base64 (Parallel)
   await Promise.all(
-    row._fotos.map(async (f, i) => {
-      if (f.startsWith("data:")) return;
-
-      const match = f.match(/[-\w]{25,}/);
-      const fileId = match ? match[0] : null;
+    row._fotos.map(async (url, i) => {
+      if (url.startsWith("data:")) return;
+      const fileId = getFileId(url);
       if (!fileId) return;
 
       if (imageCache.has(fileId)) {
@@ -42,69 +67,70 @@ export async function printReport(row) {
         if (base64) {
           row._fotos[i] = base64;
           imageCache.set(fileId, base64);
-          console.log(`DEBUG: foto[${i}] berhasil diambil`);
         }
       } catch (err) {
-        console.error(`Gagal ambil foto base64 foto[${i}]:`, f, err);
+        console.error("Gagal fetch image:", fileId, err);
       }
     })
   );
+} else {
+  console.log("Skip image prefetch (not OLD report)");
+}
 
-  // 3️⃣ Render sementara ke elemen hidden agar layout dihitung
+  // 3. Render ke Hidden Container
   const tempDiv = document.createElement("div");
-  tempDiv.style.position = "fixed";
-  tempDiv.style.opacity = "0";
-  tempDiv.style.top = "0";
-  tempDiv.style.left = "0";
-  tempDiv.style.width = "100%";
+  Object.assign(tempDiv.style, { position: "fixed", opacity: "0", top: "0", left: "0", width: "100%" });
   document.body.appendChild(tempDiv);
 
   const root = ReactDOM.createRoot(tempDiv);
   root.render(
     <div className="report-container">
-      <ReportPreview row={row} forceBase64 />
+      {types.map((type, i) => {
+        const Comp = reportMap[type];
+        if (!Comp) return null;
+        return (
+          <div key={type + i} className="report-page" style={{ pageBreakAfter: "always" }}>
+            <Comp row={row} forceBase64 />
+          </div>
+        );
+      })}
     </div>
   );
 
-  // 4️⃣ Tunggu dua frame untuk memastikan layout selesai
-  await new Promise(requestAnimationFrame);
-  await new Promise(requestAnimationFrame);
-  await new Promise((resolve) => setTimeout(resolve, 200));
+  // Tunggu React selesai render
+  await new Promise(res => setTimeout(res, 300));
 
-  // 5️⃣ Pastikan semua img jadi base64
-  console.log("DEBUG: convertImagesToBase64 START");
+  // 4. Final Image Check
   await convertImagesToBase64(tempDiv);
-  console.log("DEBUG: convertImagesToBase64 END");
 
-  // 6️⃣ Ambil CSS dari dokumen utama
+  // 5. Styles Collection
   const styles = Array.from(document.querySelectorAll("style"))
-    .map((s) => s.outerHTML)
+    .map(s => s.outerHTML)
     .join("\n");
-  console.log("DEBUG: Styles diambil, total length =", styles.length);
 
-  // 7️⃣ Lakukan print menggunakan iframe (kompatibel mobile & desktop)
-  console.log("DEBUG: Panggil doPrint");
+  // 6. Execute Iframe Print
   await doPrint(tempDiv.innerHTML, styles);
 
-  // 8️⃣ Bersihkan
+  // 7. Cleanup
   root.unmount();
   document.body.removeChild(tempDiv);
-
-  console.log("=== DEBUG: printReport END ===");
 }
 
+/**
+ * OPTIMALISASI: Mencetak langsung dari apa yang ada di layar
+ */
 export async function printReportFromDOM() {
-  const reportContainer = document.querySelector(".report-container");
-  if (!reportContainer) {
-    console.warn("Tidak ada .report-container di DOM!");
+  const container = document.getElementById("report-container");
+  if (!container) {
+    console.error("Gagal cetak: ID report-container tidak ditemukan di layar.");
     return;
   }
 
-  const clone = reportContainer.cloneNode(true);
+  const clone = container.cloneNode(true);
   await convertImagesToBase64(clone);
 
   const styles = Array.from(document.querySelectorAll("style"))
-    .map((s) => s.outerHTML)
+    .map(s => s.outerHTML)
     .join("\n");
 
   await doPrint(clone.innerHTML, styles);
@@ -113,27 +139,22 @@ export async function printReportFromDOM() {
 export async function convertImagesToBase64(root) {
   const imgs = root.querySelectorAll("img");
   await Promise.all(
-    Array.from(imgs).map(async (img, i) => {
+    Array.from(imgs).map(async (img) => {
       const src = img.getAttribute("src");
-      if (src && !src.startsWith("data:")) {
+      const fileId = getFileId(src);
+      if (!fileId || src.startsWith("data:")) return;
+
+      if (imageCache.has(fileId)) {
+        img.setAttribute("src", imageCache.get(fileId));
+      } else {
         try {
-          const match = src.match(/[-\w]{25,}/);
-          const fileId = match ? match[0] : null;
-          if (!fileId) return;
-
-          if (imageCache.has(fileId)) {
-            img.setAttribute("src", imageCache.get(fileId));
-            return;
-          }
-
           const base64 = await fetchImageBase64(fileId);
           if (base64) {
             img.setAttribute("src", base64);
             imageCache.set(fileId, base64);
-            console.log(`DEBUG: convert img[${i}] berhasil`);
           }
         } catch (e) {
-          console.error("Gagal convert img:", src, e);
+          console.error("Convert fail:", fileId);
         }
       }
     })
@@ -141,20 +162,10 @@ export async function convertImagesToBase64(root) {
 }
 
 async function doPrint(contentHTML, stylesHTML) {
-  console.log("DEBUG: doPrint START");
-
-  // 🔥 Gunakan iframe tersembunyi (lebih kompatibel mobile & desktop)
   const iframe = document.createElement("iframe");
-  iframe.style.position = "fixed";
-  iframe.style.top = "0";
-  iframe.style.left = "0";
-  iframe.style.width = "100%";
-  iframe.style.height = "100%";
-  iframe.style.border = "none";
-  iframe.style.opacity = "0";
-  iframe.style.pointerEvents = "none";
-  iframe.style.zIndex = "-1";
-  
+  Object.assign(iframe.style, {
+    position: "fixed", opacity: "0", pointerEvents: "none", zIndex: "-1"
+  });
   document.body.appendChild(iframe);
 
   const doc = iframe.contentWindow.document;
@@ -163,60 +174,29 @@ async function doPrint(contentHTML, stylesHTML) {
     <!DOCTYPE html>
     <html>
       <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Print Report</title>
+        <title>Sensus Ekonomi 2026 - Print</title>
         ${stylesHTML}
         ${printStyles}
       </head>
-      <body class="printing-mode">
-        ${contentHTML}
-      </body>
+      <body class="printing-mode">${contentHTML}</body>
     </html>
   `);
   doc.close();
 
-  // Tunggu semua gambar load sebelum print
+  // Wait for all images in iframe to load
   const images = doc.querySelectorAll("img");
-  await Promise.all(
-    Array.from(images).map(
-      (img) =>
-        new Promise((resolve) => {
-          if (img.complete) {
-            resolve();
-          } else {
-            img.onload = resolve;
-            img.onerror = resolve;
-          }
-        })
-    )
-  );
+  await Promise.all(Array.from(images).map(img => 
+    new Promise(res => { if (img.complete) res(); else img.onload = img.onerror = res; })
+  ));
 
-  // Tunggu sebentar untuk memastikan render selesai
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  console.log("DEBUG: Memanggil print dialog");
-
+  await new Promise(res => setTimeout(res, 500));
+  
   try {
-    // Focus iframe sebelum print
     iframe.contentWindow.focus();
-    
-    // Panggil print
     iframe.contentWindow.print();
-    
-    console.log("DEBUG: Print dialog dibuka");
-  } catch (error) {
-    console.error("ERROR saat print:", error);
-    alert("❌ Gagal membuka dialog print. Silakan coba lagi.");
+  } finally {
+    setTimeout(() => {
+      if (document.body.contains(iframe)) document.body.removeChild(iframe);
+    }, 1000);
   }
-
-  // Bersihkan iframe setelah delay (beri waktu user untuk print/cancel)
-  setTimeout(() => {
-    if (document.body.contains(iframe)) {
-      document.body.removeChild(iframe);
-      console.log("DEBUG: iframe dibersihkan");
-    }
-  }, 1000);
-
-  console.log("DEBUG: doPrint END");
 }

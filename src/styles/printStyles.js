@@ -262,7 +262,7 @@ export const printStyles = `
     width: 210mm !important;
     min-height: 290mm !important;
     margin: 0 auto !important;
-    padding: 10mm 15mm !important;
+    padding: 5mm 3mm !important;
     box-sizing: border-box !important;
     page-break-after: always;
     page-break-inside: avoid;
@@ -321,6 +321,8 @@ export const printStyles = `
     max-height: 300px;
     object-fit: contain;
   }
+
+  
 }
 
 </style>

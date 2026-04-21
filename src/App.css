@@ -50,7 +50,7 @@
   width: 210mm;
   min-height: 297mm;
   padding: 20mm 17mm;
-  margin: 0 auto 20px auto;
+  margin: 0 auto auto auto;
   box-sizing: border-box;
   page-break-after: always;
   page-break-inside: avoid;

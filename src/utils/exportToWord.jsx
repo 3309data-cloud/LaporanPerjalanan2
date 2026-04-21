@@ -180,7 +180,7 @@ export async function exportToWord(data, fileName = "Laporan.docx", onProgress) 
                 children: [
                   new Paragraph({
                     children: [
-                      new TextRun({ text: row["Nama"] || "-", font: "Arial" }),
+                      new TextRun({ text: row["NamaCocok"] || "-", font: "Arial" }),
                     ],
                   }),
                 ],
@@ -540,7 +540,7 @@ children.push(new Paragraph({ text: "", spacing: { after: 400 } }), tableD);
   // ✅ Nama file dinamis berdasarkan row terakhir
   let dynamicFileName = fileName;
   if (lastRow && lastIdx) {
-    const pelaksana = lastRow["Nama"] ? lastRow["Nama"].replace(/\s+/g, "_") : "Pelaksana";
+    const pelaksana = lastRow["NamaCocok"] ? lastRow["NamaCocok"].replace(/\s+/g, "_") : "Pelaksana";
     const namaKegiatan = lastRow["Nama Survei"] ? lastRow["Nama Survei"].replace(/\s+/g, "_") : "Nama Survei";
     const tanggal = lastRow["Tanggal Kunjungan"] ? lastRow["Tanggal Kunjungan"].replace(/\//g, "-") : "Tanggal";
     dynamicFileName = `${pelaksana}_${namaKegiatan}_${tanggal}.docx`;

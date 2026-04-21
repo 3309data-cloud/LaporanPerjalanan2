@@ -1,59 +1,35 @@
-// ========================================================
-// 📄 components/ReportPreview.jsx
-// ========================================================
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import "../App.css";
-import { fetchImageBase64 } from "../utils/fetchImageBase64";
-import { printStyles } from "../styles/printStyles"; // ✅ tambahan agar preview ikut gaya cetak
+import { printStyles } from "../styles/printStyles";
 import DriveImage from "./DriveImage";
-// ========================================================
-// 🧩 Komponen untuk menampilkan foto dari Google Drive
-// ========================================================
-const imageCache = window.__imageCache || (window.__imageCache = new Map());
+import { formatKecamatan } from "../utils/formatKecamatan";
+import { formatFullDateHari } from "../utils/formatFullDateHari";
 
+// Konsep A4 @96dpi tetap dipertahankan sesuai kode lama
+const PAGE_HEIGHT = 1122;
 
-// ========================================================
-// 🧠 Utility Lokal
-// ========================================================
-function formatFullDate(dateStr) {
-  if (!dateStr) return "";
-  const d = new Date(dateStr.split("/").reverse().join("-"));
-  if (isNaN(d)) return dateStr;
-  const hari = d.toLocaleDateString("id-ID", { weekday: "long" });
-  const tanggal = d.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  return `${hari}, ${tanggal}`;
-}
-
-function formatKecamatan(str) {
-  if (!str) return "";
-  const nama = str.replace(/^\d+\s*/, "").toLowerCase();
-  return "Kecamatan " + nama.charAt(0).toUpperCase() + nama.slice(1);
-}
-
-function capitalizeWord(str) {
+/**
+ * 🧠 Utility: Kapitalisasi kata pertama
+ */
+const capitalizeWord = (str) => {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
+};
 
-// ========================================================
-// 📄 PageABCD – setiap kegiatan satu halaman (A4 split logic)
-// ========================================================
-const PAGE_HEIGHT = 1122; // ✅ A4 @96dpi agar konsisten dengan hasil print
-
+/**
+ * 📄 PageABCD: Menangani logika pembagian halaman otomatis
+ */
 function PageABCD({ row, kegiatanIndex }) {
   const containerRef = useRef(null);
   const [pages, setPages] = useState([]);
   const [loadingCount, setLoadingCount] = useState(0);
 
-  const handleLoadingChange = (isLoading) => {
+  // Memastikan sinkronisasi loading foto
+  const handleLoadingChange = useCallback((isLoading) => {
     setLoadingCount((prev) => prev + (isLoading ? 1 : -1));
-  };
+  }, []);
 
-  // 💡 Tambahkan printStyles ke <head> agar preview sama dengan print
+  // Injeksi gaya cetak ke head
   useEffect(() => {
     const styleEl = document.createElement("style");
     styleEl.innerHTML = printStyles;
@@ -61,7 +37,9 @@ function PageABCD({ row, kegiatanIndex }) {
     return () => styleEl.remove();
   }, []);
 
-  // 🔧 Hitung pembagian halaman setelah semua foto selesai dimuat
+  /**
+   * 🔧 LOGIKA UTAMA: Split Logic (Pertahankan logika asli)
+   */
   useEffect(() => {
     if (loadingCount > 0) return;
 
@@ -77,9 +55,8 @@ function PageABCD({ row, kegiatanIndex }) {
       const sec = sections[i];
       const h = sec.offsetHeight + 18;
 
-      // Jika ketinggian melebihi 1 halaman
       if (currentHeight + h > PAGE_HEIGHT) {
-        // Kasus khusus: potong Section B (lanjutan)
+        // Kasus khusus: Potong Section B jika melebihi halaman (Logic asli tetap dipertahankan)
         if (sec.classList.contains("section-b")) {
           const remaining = PAGE_HEIGHT - currentHeight - 40;
           const content = sec.querySelector(".boxed-content");
@@ -87,9 +64,8 @@ function PageABCD({ row, kegiatanIndex }) {
           if (content && remaining > 100) {
             const cloneTop = sec.cloneNode(true);
             const cloneBottom = sec.cloneNode(true);
-            const topContent = cloneTop.querySelector(".boxed-content");
-            const bottomContent = cloneBottom.querySelector(".boxed-content");
 
+            const topContent = cloneTop.querySelector(".boxed-content");
             topContent.style.height = `${remaining}px`;
             topContent.style.overflow = "hidden";
 
@@ -106,7 +82,7 @@ function PageABCD({ row, kegiatanIndex }) {
           }
         }
 
-        // Tambah halaman baru
+        // Buat halaman baru
         result.push(currentPage);
         const newSec = sec.cloneNode(true);
         newSec.style.marginTop = "40px";
@@ -122,30 +98,28 @@ function PageABCD({ row, kegiatanIndex }) {
     setPages(result);
   }, [row, kegiatanIndex, loadingCount]);
 
-  // Ambil data dari baris
+  // Ekstraksi data dari row
   const idx = kegiatanIndex;
   const desa = row[`Desa(${idx})`] || "";
   const kec = row[`Kecamatan(${idx})`] || "";
   const kegiatan = row[`Kegiatan(${idx})`] || "-";
   const pejabat = row[`Nama(${idx})`] || "";
-  const foto = row[`Foto(${idx})`] || "";
-  const fotoList = foto
-    ? foto.split(",").map((f) => f.trim()).filter(Boolean)
-    : [];
+  const fotoStr = row[`Foto(${idx})`] || "";
+  const fotoList = fotoStr ? fotoStr.split(",").map((f) => f.trim()).filter(Boolean) : [];
 
   return (
     <div className="report-page" style={{ pageBreakAfter: "always", position: "relative" }}>
-      {/* 🔄 Spinner overlay saat loading foto */}
+      {/* Spinner Loading Foto */}
       {loadingCount > 0 && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white bg-opacity-70">
-          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-          <p className="text-gray-700 text-sm font-medium">Memuat foto...</p>
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-2" />
+          <p className="text-gray-700 text-sm font-medium">Memuat foto kegiatan...</p>
         </div>
       )}
 
-      {/* Hidden container untuk kalkulasi layout */}
+      {/* Hidden Container untuk Kalkulasi Layout */}
       <div ref={containerRef} style={{ display: "none" }}>
-        {/* === A === */}
+        {/* A. UMUM */}
         <div className="boxed-section section-a">
           <div className="boxed-section-title">A. UMUM</div>
           <table className="boxed-table full-border">
@@ -155,14 +129,13 @@ function PageABCD({ row, kegiatanIndex }) {
                   <div className="num-label">1.</div>
                   <div className="num-text">Nama Petugas</div>
                 </td>
-                <td className="cell-content">{row["Nama"] || "-"}</td>
+                <td className="cell-content">{row["NamaCocok"] || "-"}</td>
                 <td className="cell-num">
                   <div className="num-label">4.</div>
                   <div className="num-text">Anggaran / Kegiatan Membiayai</div>
                 </td>
                 <td className="cell-small">054</td>
               </tr>
-
               <tr>
                 <td className="cell-num">
                   <div className="num-label">2.</div>
@@ -177,57 +150,49 @@ function PageABCD({ row, kegiatanIndex }) {
                 </td>
                 <td className="cell-small">054</td>
               </tr>
-
               <tr>
                 <td className="cell-num">
                   <div className="num-label">3.</div>
                   <div className="num-text">Jadwal</div>
                 </td>
-                <td className="cell-content">
-                  {formatFullDate(row["Tanggal Kunjungan"]) || "-"}
-                </td>
+                <td className="cell-content">{formatFullDateHari(row["Tanggal Kunjungan"]) || "-"}</td>
                 <td className="cell-num">
                   <div className="num-label">6.</div>
                   <div className="num-text">Tanda Tangan Petugas</div>
                 </td>
-                <td className="cell-small"></td>
+                <td className="cell-small" />
               </tr>
             </tbody>
           </table>
         </div>
 
-        {/* === B === */}
+        {/* B. URUTAN KEGIATAN */}
         <div className="boxed-section section-b" style={{ marginTop: 18 }}>
-          <div className="boxed-section-title">
-            B. URUTAN KEGIATAN (RINGKASAN HASIL)
-          </div>
-          <div className="boxed-content multilinebold" style={{ marginBottom: "2px" }}>
+          <div className="boxed-section-title">B. URUTAN KEGIATAN (RINGKASAN HASIL)</div>
+          <div className="boxed-content font-bold mb-[2px]">
             {row["Tujuan Kegiatan"] || "-"} {row["Nama Survei"] || "-"}
           </div>
           <div className="boxed-content multiline">{kegiatan}</div>
         </div>
 
-        {/* === C === */}
+        {/* C. PEJABAT */}
         <div className="boxed-section section-c" style={{ marginTop: 18 }}>
-          <div className="boxed-section-title">
-            C. PEJABAT DAN TEMPAT YANG DIKUNJUNGI
-          </div>
-          <div className="boxed-content" style={{ minHeight: 80 }}>
+          <div className="boxed-section-title">C. PEJABAT DAN TEMPAT YANG DIKUNJUNGI</div>
+          <div className="boxed-content min-h-[80px]">
             {pejabat.split("\n").map((line, i) => (
               <div key={i}>{line || <br />}</div>
             ))}
           </div>
         </div>
 
-        {/* === D === */}
+        {/* D. FOTO */}
         <div className="boxed-section section-d" style={{ marginTop: 18 }}>
           <div className="boxed-section-title">D. FOTO – FOTO KEGIATAN</div>
           <div className="boxed-content">
             <div className="report-photos">
               {fotoList.length === 0 && <div>- Tidak ada foto -</div>}
               {fotoList.slice(0, 6).map((link, i) => {
-                const match = link.match(/[-\w]{25,}/);
-                const fileId = match ? match[0] : null;
+                const fileId = link.match(/[-\w]{25,}/)?.[0];
                 return fileId ? (
                   <DriveImage
                     key={i}
@@ -242,11 +207,12 @@ function PageABCD({ row, kegiatanIndex }) {
         </div>
       </div>
 
-      {/* === Render hasil split halaman === */}
+      {/* Render Hasil Split */}
       <div className="report-title">LAPORAN PERJALANAN DINAS</div>
       {pages.map((sectionList, pIdx) => (
         <div
           key={pIdx}
+          className="printable-page-area"
           dangerouslySetInnerHTML={{
             __html: sectionList.map((sec) => sec.outerHTML).join(""),
           }}
@@ -256,36 +222,21 @@ function PageABCD({ row, kegiatanIndex }) {
   );
 }
 
-// ========================================================
-// 📘 Komponen Utama
-// ========================================================
+/**
+ * 📘 ReportPreview (Main Component)
+ */
 export default function ReportPreview({ row }) {
-// Ambil nilai Ket global
-const ketValue = row["Ket"];
+  if (row["Ket"]?.toLowerCase() !== "aktif") return null;
 
-// Kalau tidak aktif → jangan tampilkan apa pun
-if (!ketValue || ketValue.toLowerCase() !== "aktif") {
-  console.log("Row ini tidak aktif, tidak ada kegiatan yang ditampilkan.");
-  return [];
-}
-
-const kegiatanIndexes = [];
-
-for (let i = 1; i <= 5; i++) {
-  const fields = [
-    row[`Desa(${i})`],
-    row[`Kecamatan(${i})`],
-    row[`Nama(${i})`],
-    row[`Kegiatan(${i})`],
-    row[`Foto(${i})`],
-  ];
-
-  if (fields.some(Boolean)) {
-    kegiatanIndexes.push(i);
+  const kegiatanIndexes = [];
+  for (let i = 1; i <= 5; i++) {
+    const hasData = [
+      row[`Desa(${i})`], row[`Kecamatan(${i})`],
+      row[`Nama(${i})`], row[`Kegiatan(${i})`],
+      row[`Foto(${i})`],
+    ].some(Boolean);
+    if (hasData) kegiatanIndexes.push(i);
   }
-}
-
-console.log("HASIL kegiatanIndexes:", kegiatanIndexes);
 
   return (
     <div className="report-preview-container">

@@ -6,6 +6,7 @@ import Charts from "./pages/Charts";
 import Tables from "./pages/ListPage";
 import ReportPage from "./pages/ReportPage";
 import SurveyPage from "./pages/SurveyPage";
+import KelolaPerjalanan from "./pages/KelolaPerjalanan";
 import { useState } from "react";
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
               <Route path="/daftarperjalanan" element={<Tables />} />
               <Route path="/cetaklaporan" element={<ReportPage />} />
               <Route path="/daftarsurvey" element={<SurveyPage />} />
+              <Route path="/kelolaPerjalanan" element={<KelolaPerjalanan />} />
             </Routes>
           </main>
         </div>

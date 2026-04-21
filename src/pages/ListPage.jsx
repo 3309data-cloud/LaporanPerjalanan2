@@ -1,388 +1,341 @@
-import { useState } from "react";
-import { printReport } from "../components/printReport";
+import { useState, useMemo, useCallback } from "react";
 import { useData } from "../context/DataContext";
+import { printReport } from "../components/printReport";
 import { updateSheet } from "../utils/updateSheet";
+import { getPrintAvailability, needNoST } from "../utils/printEngine";
+import { saveNoST } from "../api/noSTService";
+import PrintOptionModal from "../components/PrintOptionModal";
 
 function ReportTable() {
   const { data, refreshData, loading: loadingData } = useData();
-const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    survei: "",
-    kegiatan: "",
-    nama: "",
-    tujuan: "",
-    tanggal: "",
-  });
-  const [loading, setLoading] = useState(false); // spinner print
-  const [updating, setUpdating] = useState(false); // spinner update status
 
-  // 🔹 State lokal untuk override status sementara
+  // --- States: Printing ---
+  const [printModal, setPrintModal] = useState(false);
+  const [rowToPrint, setRowToPrint] = useState(null);
+  const [printOption, setPrintOption] = useState({
+    SPD: true, OLD: true, Kwitansi: true, Riil: true, Randis: true,
+  });
+
+  // --- States: UI & Status ---
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({ survei: "", kegiatan: "", nama: "", tujuan: "", tanggal: "" });
+  const [loading, setLoading] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const [localStatus, setLocalStatus] = useState({});
 
-  if (loadingData) {
-    return <p className="p-4 text-gray-500">Memuat data...</p>;
-  }
+  // --- States: NoST Logic ---
+  const [noSTModal, setNoSTModal] = useState(false);
+  const [noSTValue, setNoSTValue] = useState("");
 
-  if (!data || data.length === 0) {
-    return <p className="p-4 text-gray-500">Belum ada data kegiatan...</p>;
-  }
-
-  function formatFullDate(dateStr) {
+  // --- Helpers ---
+  const formatFullDate = (dateStr) => {
     if (!dateStr) return "";
-    const d = new Date(dateStr.split("/").reverse().join("-"));
+    const [dd, mm, yyyy] = dateStr.split("/");
+    const d = new Date(`${yyyy}-${mm}-${dd}`);
     if (isNaN(d)) return dateStr;
-    const hari = d.toLocaleDateString("id-ID", { weekday: "long" });
-    const tanggal = d.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
+    return d.toLocaleDateString("id-ID", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric"
     });
-    return `${hari}, ${tanggal}`;
-  }
+  };
 
-  const filteredData = data
-    .filter((row) => {
-      const tujuanList = [];
-      for (let i = 1; i <= 5; i++) {
-        const desa = row[`Desa(${i})`];
-        let kec = row[`Kecamatan(${i})`];
-        if (kec) kec = kec.length > 4 ? kec.substring(4).trim() : kec.trim();
-        if (desa || kec) tujuanList.push([desa, kec].filter(Boolean).join(", "));
-      }
-      const tujuanLokasi = tujuanList.join(" ");
-      const kegiatanFull = row["Tujuan Kegiatan"];
-      return (
-        row["Nama Survei"].toLowerCase().includes(filters.survei.toLowerCase()) &&
-        kegiatanFull.toLowerCase().includes(filters.kegiatan.toLowerCase()) &&
-        row["Nama"].toLowerCase().includes(filters.nama.toLowerCase()) &&
-        tujuanLokasi.toLowerCase().includes(filters.tujuan.toLowerCase()) &&
-        row["Tanggal Kunjungan"].toLowerCase().includes(filters.tanggal.toLowerCase())
-      );
-    })
-    .sort((a, b) => {
-      const dateA = new Date(a["Tanggal Kunjungan"].split("/").reverse().join("-"));
-      const dateB = new Date(b["Tanggal Kunjungan"].split("/").reverse().join("-"));
-      if (dateA.getTime() !== dateB.getTime()) return dateA - dateB;
-      return a["Nama"].localeCompare(b["Nama"]);
-    });
+  const getTujuanList = (row) => {
+    const list = [];
+    for (let i = 1; i <= 5; i++) {
+      const desa = row[`Desa(${i})`];
+      let kec = row[`Kecamatan(${i})`];
+      if (kec) kec = kec.length > 4 ? kec.substring(4).trim() : kec.trim();
+      if (desa || kec) list.push([desa, kec].filter(Boolean).join(", "));
+    }
+    return list;
+  };
 
-  // 🔹 Fungsi ubah status
+  const filteredData = useMemo(() => {
+    if (!data) return [];
+    return data
+      .filter((row) => {
+        const tujuanStr = getTujuanList(row).join(" ").toLowerCase();
+        return (
+          row["Nama Survei"].toLowerCase().includes(filters.survei.toLowerCase()) &&
+          row["Tujuan Kegiatan"].toLowerCase().includes(filters.kegiatan.toLowerCase()) &&
+          row["NamaCocok"].toLowerCase().includes(filters.nama.toLowerCase()) &&
+          tujuanStr.includes(filters.tujuan.toLowerCase()) &&
+          row["Tanggal Kunjungan"].toLowerCase().includes(filters.tanggal.toLowerCase())
+        );
+      })
+      .sort((a, b) => {
+        const parse = (s) => new Date(s.split("/").reverse().join("-"));
+        return parse(a["Tanggal Kunjungan"]) - parse(b["Tanggal Kunjungan"]) ||
+          a["NamaCocok"].localeCompare(b["NamaCocok"]);
+      });
+  }, [data, filters]);
+
   const handleEditStatus = async (row) => {
     const current = localStatus[row["ID_Laporan"]] || row["Ket"]?.trim() || "Aktif";
     const newStatus = current === "Aktif" ? "Hapus" : "Aktif";
-
-    const confirmChange = window.confirm(
-      `Apakah kamu yakin ingin mengubah status laporan ini menjadi "${newStatus}"?`
-    );
-    if (!confirmChange) return;
-
+    if (!window.confirm(`Ubah status menjadi "${newStatus}"?`)) return;
+    setUpdating(true);
     try {
-      setUpdating(true);
-      // 🔹 Update UI lokal langsung
-      setLocalStatus({ ...localStatus, [row["ID_Laporan"]]: newStatus });
-
+      setLocalStatus(prev => ({ ...prev, [row["ID_Laporan"]]: newStatus }));
       const res = await updateSheet(row["ID_Laporan"], "Ket", newStatus);
-      console.log("updateSheet response:", res);
-
       if (res.status === "ok" || res.status === "success") {
-        alert(`✅ ${res.message || "Status berhasil diperbarui!"}`);
-        // refresh data dari CSV publik
-        try {
-          await refreshData();
-        } catch (err) {
-          console.warn("⚠️ Refresh data gagal:", err);
-        }
+        await refreshData();
       } else {
-        alert(`❌ Gagal memperbarui: ${res.message || "Respons tidak valid"}`);
-        // rollback local status jika gagal
-        setLocalStatus({ ...localStatus, [row["ID_Laporan"]]: current });
+        throw new Error(res.message);
       }
     } catch (err) {
-      console.error("❌ Error saat update status:", err);
-      alert(`❌ Terjadi kesalahan saat update status: ${err.message || "unknown"}`);
-      // rollback local status jika error
-      setLocalStatus({ ...localStatus, [row["ID_Laporan"]]: current });
+      alert(`Gagal: ${err.message}`);
+      setLocalStatus(prev => ({ ...prev, [row["ID_Laporan"]]: current }));
     } finally {
       setUpdating(false);
     }
   };
 
-  const handlePrint = async (row) => {
+  const openPrintModal = (row) => {
+    setRowToPrint(row);
+    setPrintOption({ SPD: true, OLD: true, Kwitansi: true, Riil: true, Randis: true });
+    setPrintModal(true);
+  };
+
+  const executePrint = async (row) => {
+    const sections = Object.keys(printOption).filter(k => printOption[k]);
+    setLoading(true);
     try {
-      setLoading(true);
-      await printReport(row);
+      await printReport(row, sections);
     } finally {
       setLoading(false);
+      setPrintModal(false);
     }
   };
 
-return (
-  <div className="relative">
-    {/* Spinner print */}
-    {loading && (
-      <div className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-          <span className="mt-2 text-white font-semibold">
-            Mencetak laporan...
-          </span>
-        </div>
-      </div>
-    )}
+  const confirmPrint = async () => {
+    if (!rowToPrint) return;
+    if (printOption.Randis) {
+      const missing = needNoST([rowToPrint]);
+      if (missing.length > 0) {
+        setNoSTModal(true);
+        return;
+      }
+    }
+    await executePrint(rowToPrint);
+  };
 
-    {/* Spinner update */}
-    {updating && (
-      <div className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-          <span className="mt-2 text-yellow-300 font-semibold">
-            Memperbarui status...
-          </span>
-        </div>
-      </div>
-    )}
+  const submitNoST = async () => {
+    if (!noSTValue) return alert("Isi NoST!");
+    setUpdating(true);
+    try {
+      const res = await saveNoST(noSTValue, [rowToPrint]);
+      if (res.success) {
+        rowToPrint.NoST = noSTValue;
+        setNoSTModal(false);
+        setNoSTValue("");
+        await executePrint(rowToPrint);
+      }
+    } finally {
+      setUpdating(false);
+    }
+  };
 
-    {/* 🔽 Tombol toggle filter (mobile) — sticky di bawah navbar */}
-    <div className="sm:hidden sticky top-[0px] z-30 bg-white border-b border-gray-300 p-2 shadow-md">
-      <div className="flex justify-end mb-2">
-        <button
-          onClick={() => setShowFilters((prev) => !prev)}
-          className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm flex items-center gap-2 w-full justify-center"
-        >
-          <span>{showFilters ? "Tutup Pencarian" : "Cari Data"}</span>
-          <span
-            className={`transform transition-transform duration-300 ${
-              showFilters ? "rotate-180" : "rotate-0"
-            }`}
-          >
-            ▼
-          </span>
-        </button>
-      </div>
+  if (loadingData) return <div className="p-8 text-center animate-pulse text-gray-500">Memuat data Sensus Ekonomi...</div>;
 
-      {/* Filter collapsible */}
-      {showFilters && (
-        <div className="mb-2 border rounded bg-gray-50 p-3 space-y-2 shadow-inner">
-          {["survei", "kegiatan", "nama", "tujuan", "tanggal"].map((key) => (
-            <input
-              key={key}
-              type="text"
-              placeholder={`Cari ${key}`}
-              value={filters[key]}
-              onChange={(e) =>
-                setFilters({ ...filters, [key]: e.target.value })
-              }
-              className="w-full p-2 border rounded text-sm"
-            />
-          ))}
+  return (
+    <div className="relative min-h-screen bg-gray-50 p-2 sm:p-4">
+      {(loading || updating) && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center">
+            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-blue-700 font-bold">Menyiapkan Dokumen...</p>
+          </div>
         </div>
       )}
-    </div>
 
-    {/* 🔽 Kontainer utama tabel & list */}
-    <div className="border border-gray-300 rounded overflow-hidden">
-      {/* scroll di sini saja agar sticky di atas tetap menempel */}
-      <div className="overflow-y-auto max-h-[calc(100vh-120px)]">
-        {/* 💻 Desktop Table */}
-        <table className="hidden sm:table table-auto w-full border-collapse text-sm">
-          <thead className="bg-gray-100 sticky top-0 z-10">
-            <tr className="text-left">
-              <th className="border p-2">Nama Survei</th>
-              <th className="border p-2">Nama Kegiatan</th>
-              <th className="border p-2">Nama</th>
-              <th className="border p-2">Tujuan</th>
-              <th className="border p-2">Tanggal</th>
-              <th className="border p-2 text-center">Aksi</th>
-            </tr>
+      {/* SEARCH SECTION (MOBILE & DESKTOP) */}
+{/* SEARCH SECTION */}
+      <div className="mb-4">
+        {/* Tombol ini SEKARANG HANYA MUNCUL DI MOBILE (sm:hidden) */}
+        <button 
+          onClick={() => setShowFilters(!showFilters)}
+          className="sm:hidden w-full bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg font-bold flex justify-between items-center gap-4 mb-2"
+        >
+          <span className="flex items-center gap-2">🔍 {showFilters ? "Tutup Filter" : "Cari Laporan"}</span>
+          <span className="text-xs">{showFilters ? "▲" : "▼"}</span>
+        </button>
 
-            {/* Filter bar desktop */}
-            <tr className="bg-gray-50 sticky top-[38px] z-10">
-              {["survei", "kegiatan", "nama", "tujuan", "tanggal"].map(
-                (key) => (
-                  <th key={key} className="border p-1">
-                    <input
-                      type="text"
-                      placeholder={`Cari ${key}`}
-                      value={filters[key]}
-                      onChange={(e) =>
-                        setFilters({ ...filters, [key]: e.target.value })
-                      }
-                      className="w-full p-1 border rounded text-xs"
-                    />
-                  </th>
-                )
-              )}
-              <th className="border p-1"></th>
-            </tr>
-          </thead>
+        {/* Panel Filter: 
+            - Di Desktop (sm): Langsung grid (Tampil permanen)
+            - Di Mobile: Tampil jika showFilters true (hidden / grid)
+        */}
+        <div className={`
+          bg-white p-4 rounded-xl shadow-sm border gap-3 animate-fadeIn
+          grid-cols-1 sm:grid grid-cols-5 
+          ${showFilters ? "grid" : "hidden sm:grid"}
+        `}>
+          {Object.keys(filters).map(key => (
+            <div key={key}>
+              <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">
+                {key === "survei" ? "Nama Survei" : 
+                 key === "nama" ? "Nama" : 
+                 key}
+              </label>
+              <input
+                placeholder={`Cari ${key}...`}
+                className="w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                value={filters[key]}
+                onChange={e => setFilters({...filters, [key]: e.target.value})}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
 
-          <tbody>
-            {filteredData.length === 0 ? (
+      {/* 🖥️ DESKTOP VIEW (TABLE) */}
+      <div className="hidden sm:block bg-white rounded-2xl shadow-sm border overflow-hidden">
+        <div className="overflow-x-auto max-h-[calc(100vh-200px)]">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-gray-100 sticky top-0 z-20 shadow-sm">
               <tr>
-                <td
-                  colSpan="6"
-                  className="border p-2 text-center text-gray-500 italic"
-                >
-                  Tidak ada data yang cocok...
-                </td>
+                {["Nama Survei", "Kegiatan", "Pelaksana", "Tujuan Lokasi", "Tanggal"].map(h => (
+                  <th key={h} className="p-3 border-b font-bold text-gray-700">{h}</th>
+                ))}
+                <th className="p-3 border-b text-center">Aksi</th>
               </tr>
-            ) : (
-              filteredData.map((row) => {
-                const tujuanList = [];
-                for (let j = 1; j <= 5; j++) {
-                  const desa = row[`Desa(${j})`];
-                  let kec = row[`Kecamatan(${j})`];
-                  if (kec)
-                    kec =
-                      kec.length > 4 ? kec.substring(4).trim() : kec.trim();
-                  if (desa || kec)
-                    tujuanList.push([desa, kec].filter(Boolean).join(", "));
-                }
-
-                const status =
-                  localStatus[row["ID_Laporan"]] || row["Ket"] || "Aktif";
-                const statusColor =
-                  status === "Hapus"
-                    ? "text-red-600"
-                    : status === "Aktif"
-                    ? "text-green-600"
-                    : "text-gray-600";
-
+            </thead>
+            <tbody>
+              {filteredData.map((row) => {
+                const status = localStatus[row["ID_Laporan"]] || row["Ket"] || "Aktif";
                 return (
-                  <tr key={row["ID_Laporan"]} className="hover:bg-gray-50">
-                    <td className="border p-2">{row["Nama Survei"]}</td>
-                    <td className="border p-2">{row["Tujuan Kegiatan"]}</td>
-                    <td className="border p-2">{row["Nama"]}</td>
-                    <td className="border p-2">
-                      {tujuanList.map((t, idx) => (
-                        <div key={idx}>{t}</div>
-                      ))}
+                  <tr key={row["ID_Laporan"]} className={`hover:bg-blue-50/30 transition ${status === 'Hapus' ? 'bg-red-50/50' : ''}`}>
+                    <td className="p-3 border-b font-medium">{row["Nama Survei"]}</td>
+                    <td className="p-3 border-b text-gray-600">{row["Tujuan Kegiatan"]}</td>
+                    <td className="p-3 border-b">{row["NamaCocok"]}</td>
+                    <td className="p-3 border-b text-xs">
+                      {getTujuanList(row).map((t, i) => <div key={i} className="mb-1">• {t}</div>)}
                     </td>
-                    <td className="border p-2">
-                      {formatFullDate(row["Tanggal Kunjungan"])}
-                    </td>
-                    <td className="border p-2 text-center">
-                      <div className="flex gap-2 justify-center">
-                        <button
-                          onClick={() => handlePrint(row)}
-                          className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-                        >
-                          🖨️
-                        </button>
-                        <button
-                          onClick={() => handleEditStatus(row)}
-                          className={`px-3 py-1 rounded hover:opacity-80 ${
-                            status === "Hapus"
-                              ? "bg-green-500 text-white"
-                              : "bg-red-500 text-white"
-                          }`}
-                        >
-                          {status === "Hapus" ? "🔄" : "🗑️"}
-                        </button>
-                      </div>
-                      <div className={`text-xs mt-1 ${statusColor}`}>
-                        {status === "Hapus" ? "Dihapus" : "Aktif"}
+                    <td className="p-3 border-b whitespace-nowrap">{formatFullDate(row["Tanggal Kunjungan"])}</td>
+                    <td className="p-3 border-b text-center">
+                      <div className="flex flex-col gap-1 items-center">
+                        <div className="flex gap-1">
+                          {/* Desktop Button Print */}
+                          <button
+                            onClick={() => openPrintModal(row)}
+                            disabled={status === 'Hapus'} // Logika baru: disable jika hapus
+                            className={`p-2 rounded-lg transition ${status === 'Hapus'
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50' // Style saat mati
+                              : 'bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white' // Style saat aktif
+                              }`}
+                          >
+                            🖨️
+                          </button>
+                          <button onClick={() => handleEditStatus(row)} className={`p-2 rounded-lg transition ${status === 'Hapus' ? 'bg-green-100 text-green-700 hover:bg-green-600' : 'bg-red-100 text-red-700 hover:bg-red-600'} hover:text-white`}>
+                            {status === "Hapus" ? "🔄" : "🗑️"}
+                          </button>
+                        </div>
+                        <span className={`text-[10px] font-bold uppercase ${status === 'Hapus' ? 'text-red-500' : 'text-green-500'}`}>{status}</span>
                       </div>
                     </td>
                   </tr>
                 );
-              })
-            )}
-          </tbody>
-        </table>
-
-        {/* 📱 Mobile List Section */}
-        <div className="sm:hidden p-2 space-y-3">
-          {filteredData.length === 0 ? (
-            <p className="text-center text-gray-500 italic">
-              Tidak ada data yang cocok...
-            </p>
-          ) : (
-            filteredData.map((row) => {
-              const tujuanList = [];
-              for (let j = 1; j <= 5; j++) {
-                const desa = row[`Desa(${j})`];
-                let kec = row[`Kecamatan(${j})`];
-                if (kec)
-                  kec =
-                    kec.length > 4 ? kec.substring(4).trim() : kec.trim();
-                if (desa || kec)
-                  tujuanList.push([desa, kec].filter(Boolean).join(", "));
-              }
-
-              const status =
-                localStatus[row["ID_Laporan"]] || row["Ket"] || "Aktif";
-              const statusColor =
-                status === "Hapus"
-                  ? "text-red-600"
-                  : status === "Aktif"
-                  ? "text-green-600"
-                  : "text-gray-600";
-
-              return (
-                <div
-                  key={row["ID_Laporan"]}
-                  className="bg-white shadow rounded-lg p-3 border border-gray-200"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-gray-800">
-                        {row["Nama Survei"]}
-                      </h3>
-                      <p className="text-xs text-gray-500">
-                        {formatFullDate(row["Tanggal Kunjungan"])}
-                      </p>
-                    </div>
-                    <span className={`text-xs font-semibold ${statusColor}`}>
-                      {status === "Hapus" ? "Dihapus" : "Aktif"}
-                    </span>
-                  </div>
-
-                  <div className="mt-2 text-sm">
-                    <p>
-                      <span className="font-semibold">Kegiatan:</span>{" "}
-                      {row["Tujuan Kegiatan"]}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Nama:</span> {row["Nama"]}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Tujuan:</span>{" "}
-                      {tujuanList.join("; ")}
-                    </p>
-                  </div>
-
-                  <div className="mt-3 flex justify-end gap-2">
-                    <button
-                      onClick={() => handlePrint(row)}
-                      className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
-                    >
-                      🖨️
-                    </button>
-                    <button
-                      onClick={() => handleEditStatus(row)}
-                      className={`px-3 py-1 rounded text-sm hover:opacity-80 ${
-                        status === "Hapus"
-                          ? "bg-green-500 text-white"
-                          : "bg-red-500 text-white"
-                      }`}
-                    >
-                      {status === "Hapus" ? "Aktifkan" : "Hapus"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          )}
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
+
+      {/* 📱 MOBILE VIEW (CARDS) */}
+      <div className="sm:hidden space-y-4">
+        {filteredData.length === 0 ? (
+          <div className="text-center py-10 text-gray-400">Data tidak ditemukan</div>
+        ) : (
+          filteredData.map((row) => {
+            const status = localStatus[row["ID_Laporan"]] || row["Ket"] || "Aktif";
+            return (
+              <div
+                key={row["ID_Laporan"]}
+                className={`bg-white rounded-2xl border p-4 shadow-sm space-y-3 transition ${status === 'Hapus' ? 'border-red-200 bg-red-50/30' : 'border-gray-200'}`}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <span className="text-[12px] font-black text-gray-600 uppercase tracking-tighter bg-blue-50 px-2 py-0.5 rounded">
+                      {row["Nama Survei"]}
+                    </span>
+                    <h3 className="font-bold text-gray-800 mt-1 leading-tight">{row["NamaCocok"]}</h3>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${status === 'Hapus' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                    {status}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="text-gray-400 uppercase font-bold">Kegiatan</div>
+                  <div className="text-gray-800 font-semibold">{row["Tujuan Kegiatan"]}</div>
+
+                  <div className="text-gray-400 uppercase font-bold">Tanggal</div>
+                  <div className="text-gray-800">{row["Tanggal Kunjungan"]}</div>
+                </div>
+
+                <div className="bg-gray-50 p-2 rounded-xl border border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Tujuan Lokasi:</p>
+                  {getTujuanList(row).map((t, i) => (
+                    <div key={i} className="text-[11px] text-gray-600">• {t}</div>
+                  ))}
+                </div>
+
+                <div className="flex gap-1 pt-1">
+                  {/* Mobile Button Print */}
+                  <button
+                    onClick={() => openPrintModal(row)}
+                    disabled={status === 'Hapus'} // Logika baru: disable jika hapus
+                    className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition active:scale-95 ${status === 'Hapus'
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed' // Style saat mati
+                        : 'bg-blue-600 text-white shadow-lg shadow-blue-100 active:bg-blue-700' // Style saat aktif
+                      }`}
+                  >
+                    {status === 'Hapus' ? "🚫 Laporan dihapus" : "🖨️ Cetak Laporan"}
+                  </button>
+                  <button
+                    onClick={() => handleEditStatus(row)}
+                    className={`px-4 py-3 rounded-xl border-2 transition active:scale-95 ${status === 'Hapus' ? 'border-green-600 text-green-600' : 'border-red-100 text-red-500'}`}
+                  >
+                    {status === "Hapus" ? "🔄" : "🗑️"}
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* MODALS */}
+      <PrintOptionModal
+        open={printModal}
+        onClose={() => setPrintModal(false)}
+        onConfirm={confirmPrint}
+        printOption={printOption}
+        setPrintOption={setPrintOption}
+        rowsToPrint={null}
+        printTarget={rowToPrint}
+      />
+
+      {noSTModal && (
+        <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm animate-popIn">
+            <h3 className="font-bold text-lg mb-2 text-center text-gray-800">Nomor Surat Tugas</h3>
+            <p className="text-xs text-gray-500 mb-4 text-center">Data Randis memerlukan NoST untuk dicetak.</p>
+            <input
+              className="w-full border-2 border-blue-50 p-4 rounded-xl focus:border-blue-500 outline-none transition font-mono"
+              placeholder="Input NoST..."
+              value={noSTValue}
+              onChange={e => setNoSTValue(e.target.value)}
+              autoFocus
+            />
+            <div className="flex gap-2 mt-8">
+              <button className="flex-1 py-3 bg-gray-100 rounded-xl font-medium" onClick={() => setNoSTModal(false)}>Batal</button>
+              <button className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold" onClick={submitNoST}>Simpan & Print</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-);
-
-
-
-
+  );
 }
 
 export default ReportTable;

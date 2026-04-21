@@ -1,91 +1,95 @@
-// components/ReportResults.jsx
 import React, { useState } from "react";
 import ReportPreview from "./ReportPreview";
-import { printReportFromDOM } from "./printReport";
-import { exportToWord } from "../utils/exportToWord";
+import { printReport } from "./printReport";
 
-function ReportResults({ filtered, selected }) {
+function ReportResults({ filtered = [], selected = {} }) {
   const { survei, kegiatan, nama, tanggal } = selected;
-  const noData = survei && kegiatan && nama && tanggal && filtered.length === 0;
+  const isComplete = survei && kegiatan && nama && tanggal;
 
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [isPrinting, setIsPrinting] = useState(false);
 
-  const handleExportWord = async () => {
-    if (!filtered.length) return;
-    setLoading(true);
-    setProgress(0);
-
+  const handlePrint = async () => {
+    if (filtered.length === 0) return;
+    setIsPrinting(true);
     try {
-      await exportToWord(filtered, "Laporan.docx", (p) => setProgress(p));
-    } catch (err) {
-      console.error("Gagal export Word:", err);
+      const sections = ["OLD"];
+      await printReport(filtered[0], sections);
+    } catch (error) {
+      console.error("Print Error:", error);
+      alert("Gagal memproses dokumen.");
     } finally {
-      setLoading(false);
-      setProgress(0);
+      setIsPrinting(false);
     }
   };
 
   return (
-    <section className="bg-white p-4 rounded-xl shadow flex flex-col">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-3 shrink-0">
-        <h2 className="text-lg font-semibold">Hasil Laporan</h2>
-        {filtered.length > 0 && (
-          <div className="flex gap-2">
-            <button
-              onClick={() => printReportFromDOM(filtered[0])}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700"
-            >
-              🖨️ Print
-            </button>
-
-            <button
-              onClick={handleExportWord}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700"
-            >
-              📄 Export Word
-            </button>
+    <section className="bg-white rounded-2xl shadow-sm border overflow-hidden mb-20">
+      {/* LOADING OVERLAY KHUSUS PRINT */}
+      {isPrinting && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center">
+            <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-blue-600 border-solid"></div>
+            <p className="mt-4 font-bold text-blue-800 tracking-wide shadow-sm">Menyiapkan Printer...</p>
           </div>
+        </div>
+      )}
+
+      {/* HEADER PREVIEW */}
+      <div className="p-4 border-b flex justify-between items-center bg-gray-50/50">
+        <h2 className="font-bold text-gray-800 text-sm">Preview Laporan</h2>
+        
+        {/* Tombol Print Desktop (Sembunyi di Mobile) */}
+        {isComplete && filtered.length > 0 && (
+          <button 
+            onClick={handlePrint}
+            disabled={isPrinting}
+            className="hidden sm:block bg-blue-600 text-white px-6 py-2 rounded-lg text-xs font-bold active:scale-95 transition disabled:opacity-50"
+          >
+            🖨️ Cetak Laporan
+          </button>
         )}
       </div>
 
-      {/* Progress overlay */}
-      {loading && (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black bg-opacity-40 pointer-events-auto">
-          <div className="w-64">
-            <div className="w-full h-4 bg-gray-200 rounded overflow-hidden">
-              <div
-                className="h-4 bg-green-500 transition-all duration-200"
-                style={{ width: `${progress}%` }}
-              ></div>
+      <div className="p-2 sm:p-6 bg-gray-100/30">
+        {!isComplete ? (
+          <div className="py-20 text-center">
+            <p className="text-gray-400 text-[10px] uppercase font-bold tracking-widest px-10">
+              Silakan lengkapi filter secara berurutan terlebih dahulu
+            </p>
+          </div>
+        ) : filtered.length > 0 ? (
+          <div className="flex flex-col">
+            {/* WRAPPER SCROLL */}
+            <div className="overflow-x-auto pb-4 scrollbar-hide">
+              <div className="min-w-[850px] origin-top-left scale-[0.42] sm:scale-100 transition-transform mb-[-450px] sm:mb-0" 
+                   style={{ height: "fit-content" }}>
+                <div id="report-container">
+                  {filtered.map((row, i) => <ReportPreview key={i} row={row} />)}
+                </div>
+              </div>
             </div>
-            <div className="text-center text-white text-sm font-semibold mt-2">
-              {progress > 0
-                ? `Menyiapkan... ${progress}%`
-                : "Menyiapkan laporan..."}
+
+            <p className="sm:hidden text-center text-[10px] text-gray-400 mt-4 mb-2 font-medium italic">
+              ↔️ Geser untuk melihat detail laporan
+            </p>
+
+            {/* TOMBOL PRINT MOBILE (Floating / Sticky di bawah) */}
+            <div className="sm:hidden mt-4">
+               <button 
+                onClick={handlePrint}
+                disabled={isPrinting}
+                className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-sm shadow-lg shadow-blue-200 active:scale-95 transition flex items-center justify-center gap-2"
+              >
+                {isPrinting ? "Sabar ya..." : "🖨️ Cetak Sekarang"}
+              </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Report Container */}
-      {filtered.length > 0 ? (
-        <div
-          id="report-container"
-          className="report-container"
-        >
-          {filtered.map((row, i) => (
-            <ReportPreview key={i} row={row} />
-          ))}
-        </div>
-      ) : (
-        <p className="text-center text-gray-500 py-6 flex-1 flex items-center justify-center">
-          {noData
-            ? "DATA TIDAK DITEMUKAN"
-            : "SILAKAN PILIH NAMA SURVEI, KEGIATAN, NAMA, DAN TANGGAL"}
-        </p>
-      )}
+        ) : (
+          <div className="py-20 text-center font-bold text-red-400 text-xs uppercase tracking-tighter">
+            Data tidak ditemukan untuk kombinasi ini
+          </div>
+        )}
+      </div>
     </section>
   );
 }
