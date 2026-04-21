@@ -27,11 +27,6 @@ export default function PengeluaranRiil({ row }) {
   font-family: "TimesWeb","Times New Roman",serif !important;
 }
 
-.print-kwitansi table {
-  width: 100% !important;
-  table-layout: fixed !important;
-}
-
 /* teks normal rapat */
 .print-kwitansi p{
   margin:0 !important;
