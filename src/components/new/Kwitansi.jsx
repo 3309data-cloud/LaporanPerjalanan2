@@ -11,26 +11,31 @@ export default function Kwitansi({ row }) {
   table-layout: fixed !important;
 }
 
-/* ⭐ FIX JARAK ANTAR BARIS WORD */
+/* teks normal rapat */
 .print-kwitansi p{
   margin:0 !important;
   line-height:1.2 !important;
 }
 
-/* Word kasih class ini ke semua paragraf */
+/* class Word */
 .print-kwitansi .MsoNormal{
   margin:0 !important;
   line-height:1.2 !important;
 }
 
-/* Ini penyebab spasi kosong tinggi */
-.print-kwitansi o\\:p{
+/* ⭐ hanya sembunyikan tag o:p di paragraf yang ADA TEKS */
+.print-kwitansi p:not(:empty) o\:p{
   display:none !important;
 }
 
-/* Word kasih span kosong tinggi */
-.print-kwitansi span{
-  line-height:1.2 !important;
+/* ⭐ khusus paragraf kosong → jadi spacer tanda tangan */
+.print-kwitansi p:empty{
+  height:14px;   /* tinggi 1 baris kosong */
+}
+
+/* Word kadang isi &nbsp; jadi tidak dianggap empty */
+.print-kwitansi p:has(o\:p:only-child){
+  height:14px;
 }
 </style>
 <body lang=EN-ID style='tab-interval:36.0pt;word-wrap:break-word'>
