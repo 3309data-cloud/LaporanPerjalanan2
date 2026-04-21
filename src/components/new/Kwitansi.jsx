@@ -6,9 +6,57 @@ export default function Kwitansi({ row }) {
       dangerouslySetInnerHTML={{
         __html: `
 <style>
+@font-face {
+  font-family: "TimesWeb";
+  src: url("/fonts/nimbusroman-regular.ttf") format("truetype");
+  font-weight: normal;
+}
+@font-face {
+  font-family: "TimesWeb";
+  src: url("/fonts/nimbusroman-bold.ttf") format("truetype");
+  font-weight: bold;
+}
+@font-face {
+  font-family: "TimesWeb";
+  src: url("/fonts/nimbusroman-italic.ttf") format("truetype");
+  font-style: italic;
+}
+
+/* paksa semua isi dokumen pakai font yg konsisten */
+.print-kwitansi *{
+  font-family: "TimesWeb","Times New Roman",serif !important;
+}
+  
 .print-kwitansi table {
-  width: 103% !important;
+  width: 100% !important;
   table-layout: fixed !important;
+}
+
+/* teks normal rapat */
+.print-kwitansi p{
+  margin:0 !important;
+  line-height:1.2 !important;
+}
+
+/* class Word */
+.print-kwitansi .MsoNormal{
+  margin:0 !important;
+  line-height:1.2 !important;
+}
+
+/* ⭐ hanya sembunyikan tag o:p di paragraf yang ADA TEKS */
+.print-kwitansi p:not(:empty) o\:p{
+  display:none !important;
+}
+
+/* ⭐ khusus paragraf kosong → jadi spacer tanda tangan */
+.print-kwitansi p:empty{
+  height:14px;   /* tinggi 1 baris kosong */
+}
+
+/* Word kadang isi &nbsp; jadi tidak dianggap empty */
+.print-kwitansi p:has(o\:p:only-child){
+  height:14px;
 }
 </style>
 <body lang=EN-ID style='tab-interval:36.0pt;word-wrap:break-word'>
