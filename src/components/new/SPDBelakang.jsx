@@ -1,1354 +1,240 @@
+import React from "react";
+
+const spdBelakangStyles = `
+/* =========================================================
+   GAYA KHUSUS LAPORAN: LEMBAR BELAKANG SPD (VISUM)
+   ========================================================= */
+.spdb-container {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  line-height: 1.4;
+  color: #000;
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* Tabel Utama Pembagi Layout Kiri-Kanan */
+.spdb-main-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* Memaksa rasio 50:50 */
+}
+
+/* Pengaturan Garis (Borders) */
+.spdb-main-table td {
+  padding: 15px 20px;
+  vertical-align: top;
+}
+
+/* Garis Tengah Vertikal */
+.col-left {
+  border-right: 1px solid black; 
+}
+
+/* Garis Horizontal Pembatas Baris */
+.row-divider td {
+  border-bottom: 1px solid black;
+}
+/* Garis Horizontal Tebal di akhir tabel (sebelum footer) */
+.row-last td {
+  border-bottom: 1px solid black; 
+}
+
+/* Tabel Inner (Untuk menyejajarkan titik dua dalam tiap blok) */
+.spdb-inner-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.spdb-inner-table td {
+  padding: 2px 0;
+  border: none !important;
+  vertical-align: top;
+}
+.i-label { width: 100px; }
+.i-colon { width: 15px; text-align: center; }
+.i-val { width: auto; }
+
+/* Tanda Tangan */
+.sign-block {
+  text-align: center;
+  margin-top: 20px;
+}
+.sign-space {
+  height: 125px; /* Ruang untuk tanda tangan basah */
+}
+
+/* Footer Catatan */
+.spdb-footer {
+  margin-top: 10px;
+  font-size: 10pt; /* Biasanya footer sedikit lebih kecil */
+  display: flex;
+}
+.f-label { width: 120px; flex-shrink: 0; }
+.f-colon { width: 15px; text-align: center; flex-shrink: 0; }
+.f-text { flex-grow: 1; text-align: justify; }
+
+.font-bold { font-weight: bold; }
+.font-underline { text-decoration: underline; }
+`;
+
 export default function SPDBelakang({ row }) {
-    
+  // Mapping Data (Sesuaikan dengan field data Anda)
+  const asal = row["tujuan"] || ""; 
+  const tujuan = row["tujuan"] || "";
+  
+  // Pejabat
+  const namaKepsK = "Puguh Raharjo, SST, MT";
+  const nipKepsK = "1980010022002121005";
+  const namaPpk = "Siti Taufiq Hidayati, S.ST., M.Ak";
+  const nipPpk = "198503292009122005";
+
   return (
-    <div
-      dangerouslySetInnerHTML={{
-        __html: `
-<style>
-@font-face {
-  font-family: "TimesWeb";
-  src: url("/fonts/nimbusroman-regular.ttf") format("truetype");
-  font-weight: normal;
-}
-@font-face {
-  font-family: "TimesWeb";
-  src: url("/fonts/nimbusroman-bold.ttf") format("truetype");
-  font-weight: bold;
-}
-@font-face {
-  font-family: "TimesWeb";
-  src: url("/fonts/nimbusroman-italic.ttf") format("truetype");
-  font-style: italic;
-}
+    <>
+      <style>{spdBelakangStyles}</style>
 
-/* paksa semua isi dokumen pakai font yg konsisten */
-.print-kwitansi *{
-  font-family: "TimesWeb","Times New Roman",serif !important;
-}
+      <div className="spdb-container">
+        
+        {/* TABEL UTAMA (GRID 50% : 50%) */}
+        <table className="spdb-main-table">
+          <colgroup>
+            <col style={{ width: "50%" }} />
+            <col style={{ width: "50%" }} />
+          </colgroup>
+          <tbody>
+            
+            {/* BARIS 1 */}
+            <tr className="row-divider">
+              <td className="col-left">
+                {/* Kotak Kiri Atas Dikosongkan sesuai format asli */}
+              </td>
+              <td>
+                <table className="spdb-inner-table">
+                  <tbody>
+                    <tr>
+                      <td className="i-label">Berangkat dari</td>
+                      <td className="i-colon">:</td>
+                      <td className="i-val">Kec. {asal}<br/>(Tempat Kedudukan)</td>
+                    </tr>
+                    <tr>
+                      <td className="i-label">Pada Tanggal</td>
+                      <td className="i-colon">:</td>
+                      <td className="i-val"></td>
+                    </tr>
+                    <tr>
+                      <td className="i-label">Ke</td>
+                      <td className="i-colon">:</td>
+                      <td className="i-val">Kec. {tujuan}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                
+                <div className="sign-block">
+                  Kepala BPS Kabupaten Boyolali
+                  <div className="sign-space"></div>
+                  <span className="font-bold font-underline">{namaKepsK}</span><br />
+                  <span className="font-bold">NIP. {nipKepsK}</span>
+                </div>
+              </td>
+            </tr>
 
-/* teks normal rapat */
-.print-kwitansi p{
-  margin:0 !important;
-  line-height:1.2 !important;
-}
+            {/* BARIS 2 (Bagian Visum Tujuan) */}
+            <tr className="row-divider">
+              <td className="col-left">
+                <table className="spdb-inner-table">
+                  <tbody>
+                    <tr>
+                      <td className="i-label">Tiba di</td>
+                      <td className="i-colon">:</td>
+                      <td className="i-val">Kec. {tujuan}</td>
+                    </tr>
+                    <tr>
+                      <td className="i-label">Pada tanggal</td>
+                      <td className="i-colon">:</td>
+                      <td className="i-val"></td>
+                    </tr>
+                  </tbody>
+                </table>
+                {/* Ruang kosong agar setara dengan sebelah kanan */}
+                <div style={{ minHeight: "200px" }}></div> 
+              </td>
+              <td>
+                <table className="spdb-inner-table">
+                  <tbody>
+                    <tr>
+                      <td className="i-label">Berangkat dari</td>
+                      <td className="i-colon">:</td>
+                      <td className="i-val">Kec. {tujuan}</td>
+                    </tr>
+                    <tr>
+                      <td className="i-label">Ke</td>
+                      <td className="i-colon">:</td>
+                      <td className="i-val">Kec. {asal}</td>
+                    </tr>
+                    <tr>
+                      <td className="i-label">Pada tanggal</td>
+                      <td className="i-colon">:</td>
+                      <td className="i-val"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
 
-/* class Word */
-.print-kwitansi .MsoNormal{
-  margin:0 !important;
-  line-height:1.2 !important;
-}
+            {/* BARIS 3 (Bagian Kembali & Keterangan) */}
+            <tr className="row-last">
+              <td className="col-left">
+                <table className="spdb-inner-table">
+                  <tbody>
+                    <tr>
+                      <td className="i-label">Tiba di</td>
+                      <td className="i-colon">:</td>
+                      <td className="i-val">Kec. {asal}<br/>(Tempat Kedudukan)</td>
+                    </tr>
+                    <tr>
+                      <td className="i-label">Pada tanggal</td>
+                      <td className="i-colon">:</td>
+                      <td className="i-val"></td>
+                    </tr>
+                  </tbody>
+                </table>
 
-/* ⭐ hanya sembunyikan tag o:p di paragraf yang ADA TEKS */
-.print-kwitansi p:not(:empty) o\:p{
-  display:none !important;
-}
+                <div className="sign-block" style={{ marginTop: "40px" }}>
+                  Pejabat Pembuat Komitmen
+                  <div className="sign-space"></div>
+                  <span className="font-bold font-underline">{namaPpk}</span><br />
+                  NIP. {nipPpk}
+                </div>
+              </td>
+              <td>
+                <div style={{ textAlign: "justify", marginBottom: "20px" }}>
+                  Telah diperiksa dengan keterangan bahwa perjalanan tersebut atas perintahnya dan semata-mata untuk kepentingan jabatan dalam waktu yang sesingkat-singkatnya.
+                </div>
 
-/* ⭐ khusus paragraf kosong → jadi spacer tanda tangan */
-.print-kwitansi p:empty{
-  height:14px;   /* tinggi 1 baris kosong */
-}
+                <div className="sign-block">
+                  Pejabat Pembuat Komitmen
+                  <div className="sign-space"></div>
+                  <span className="font-bold font-underline">{namaPpk}</span><br />
+                  NIP. {nipPpk}
+                </div>
+              </td>
+            </tr>
 
-/* Word kadang isi &nbsp; jadi tidak dianggap empty */
-.print-kwitansi p:has(o\:p:only-child){
-  height:14px;
-}
-</style>
+          </tbody>
+        </table>
 
-<body lang=EN-ID style='word-wrap:break-word'>
+        {/* FOOTER */}
+        <div className="spdb-footer">
+          <div className="f-label">
+            Catatan Lain-lain<br />
+            PERHATIAN
+          </div>
+          <div className="f-colon"><br/>:</div>
+          <div className="f-text">
+            <br/>Pejabat yang berwenang menerbitkan SPD pegawai yang melakukan perjalanan dinas para pejabat yang mengesahkan tanggal berangkat/tiba serta bendaharawan bertanggung jawab berdasarkan peraturan-peraturan keuangan Negara apabila Negara menderita rugi akibat kesalahan, kelalaian dan kealpaannya.
+          </div>
+        </div>
 
-<div class="print-kwitansi">
-
-<table class=MsoTableGrid border=1 cellspacing=0 cellpadding=0 width=633
- style='width:474.9pt;border-collapse:collapse;border:none'>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Berangkat dari</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>:</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Kec. ${row.asal}</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>(Tempat Kedudukan)</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Pada Tanggal</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>:</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Ke</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>:</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Kec. ${row.tujuan}</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=312 colspan=3 valign=top style='width:233.9pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>Kepala
-  BPS Kabupaten Boyolali</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=312 colspan=3 valign=top style='width:233.9pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><b><u><span style='font-size:11.0pt;font-family:"Arial",sans-serif;
-  color:black'>Puguh Raharjo, SST, MT</span></u></b></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  border-bottom:solid windowtext 1.0pt;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;border-bottom:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=312 colspan=3 valign=top style='width:233.9pt;border:none;
-  border-bottom:solid windowtext 1.0pt;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>NIP.
-  1980010022002121005</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Tiba di</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>:</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Kec. ${row.tujuan}</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Berangkat dari</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>:</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Kec. ${row.tujuan}</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Pada tanggal</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>:</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Ke</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>:</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Kec. ${row.asal}</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Pada tanggal</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>:</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  border-bottom:solid windowtext 1.0pt;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;border-bottom:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;border-bottom:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;border-bottom:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;border-bottom:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Tiba di</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>:</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Kec. ${row.asal}</span></p>
-  </td>
-  <td width=312 colspan=3 rowspan=4 valign=top style='width:233.9pt;border:
-  none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0cm;text-align:justify;line-height:
-  normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>Telah
-  diperiksa dengan keterangan bahwa perjalanan tersebut atas perintahnya dan
-  semata-mata untuk kepentingan jabatan dalam waktu yang sesingkat-singkatnya.</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>(Tempat Kedudukan)</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Pada tanggal</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>:</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=312 colspan=3 valign=top style='width:233.9pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=321 colspan=5 valign=top style='width:241.0pt;border:none;
-  border-right:solid windowtext 1.0pt;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>Pejabat
-  Pembuat Komitmen</span></p>
-  </td>
-  <td width=312 colspan=3 valign=top style='width:233.9pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>Pejabat
-  Pembuat Komitmen</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=321 colspan=5 valign=top style='width:241.0pt;border:none;
-  border-right:solid windowtext 1.0pt;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><b><u><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>Siti
-  Taufiq Hidayati, SST, M.Ak</span></u></b></p>
-  </td>
-  <td width=312 colspan=3 valign=top style='width:233.9pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><b><u><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>Siti
-  Taufiq Hidayati, SST, M.Ak</span></u></b></p>
-  </td>
- </tr>
- <tr>
-  <td width=321 colspan=5 valign=top style='width:241.0pt;border-top:none;
-  border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>NIP.
-  198503292009122005</span></p>
-  </td>
-  <td width=312 colspan=3 valign=top style='width:233.9pt;border:none;
-  border-bottom:solid windowtext 1.0pt;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>NIP.
-  198503292009122005</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=633 colspan=8 valign=top style='width:474.9pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>Catatan Lain-lain</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=91 valign=top style='width:68.05pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>PERHATIAN</span></p>
-  </td>
-  <td width=18 valign=top style='width:13.6pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>:</span></p>
-  </td>
-  <td width=524 colspan=6 valign=top style='width:393.25pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0cm;text-align:justify;line-height:
-  normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>Pejabat
-  yang berwenang menerbitkan SPD pegawai yang melakukan perjalanan dinas para
-  pejabat yang mengesahkan tanggal berangkat/tiba serta bendaharawan
-  bertanggung jawab berdasarkan peraturan-peraturan keuangan Negara apabila
-  Negara menderita rugi akibat kesalahan, kelalaian dan kealpaannya.</span></p>
-  </td>
- </tr>
- <tr>
-  <td width=144 colspan=3 valign=top style='width:108.35pt;border:none;
-  padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=158 valign=top style='width:118.65pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0cm;text-align:center;
-  line-height:normal'><span style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=132 valign=top style='width:99.2pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=19 valign=top style='width:14.0pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
-  <td width=161 valign=top style='width:120.7pt;border:none;padding:0cm 5.4pt 0cm 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0.05cm;line-height:13pt'><span
-  style='font-size:11.0pt;font-family:"Arial",sans-serif'>&nbsp;</span></p>
-  </td>
- </tr>
- <tr height=20>
-  <td width=91 style='border:none'></td>
-  <td width=18 style='border:none'></td>
-  <td width=36 style='border:none'></td>
-  <td width=19 style='border:none'></td>
-  <td width=158 style='border:none'></td>
-  <td width=132 style='border:none'></td>
-  <td width=19 style='border:none'></td>
-  <td width=161 style='border:none'><p class=MsoNormal style='margin-top:3cm;line-height:13pt;text-align: right'><span
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;Color:#e5e7eb'>${row.nama}</span></p></td>
- </tr>
-</table>
-
-<p class=MsoNormal>&nbsp;</p>
-
-</div>
-
-</body>
-
-        `,
-      }}
-    />
+      </div>
+    </>
   );
 }

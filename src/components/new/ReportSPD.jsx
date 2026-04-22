@@ -1,1132 +1,354 @@
-import { formatFullDate } from "../../utils/formatFullDate";
+import React from "react";
 import { formatKecamatan } from "../../utils/formatKecamatan";
+import { formatFullDate } from "../../utils/formatFullDate";
+
+// Variabel CSS ini akan kita suntikkan ke dalam komponen
+const spdStyles = `
+/* =========================================================
+   GAYA KHUSUS LAPORAN: SURAT PERJALANAN DINAS (SPD)
+   ========================================================= */
+.spd-container {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt; /* Dikecilkan sedikit agar muat 1 halaman A4 */
+  line-height: 1.4;
+  color: #000;
+  width: 100%;
+}
+
+/* Header Kanan (Nomor & Lembar) */
+.spd-header-right {
+  width: 250px;
+  margin-left: auto; /* Dorong ke kanan */
+  margin-bottom: 20px;
+}
+.spd-header-right table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.spd-header-right td {
+  padding: 2px 4px;
+  border: none !important;
+  vertical-align: top;
+}
+
+/* Header Kiri (Nama Instansi) */
+.spd-header-left {
+  margin-bottom: 15px;
+  line-height: 1.2;
+}
+
+/* Tabel Utama SPD */
+.spd-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-top: 1px solid black;    /* Garis atas tetap ada */
+  border-bottom: 1px solid black; /* Garis bawah tetap ada */
+  border-left: none;              /* Hilangkan bingkai kiri */
+  border-right: none;             /* Hilangkan bingkai kanan */
+  table-layout: fixed;
+}
+.spd-table th, 
+.spd-table td {
+  border: 1px solid black;
+  padding: 6px 8px;
+  vertical-align: top;
+  word-wrap: break-word;
+}
+
+/* Pengaturan Lebar Kolom Utama */
+.col-no { 
+  width: 5%; 
+  text-align: center; 
+  border-left: none !important; /* Rahasia hilangkan garis kiri tepi */
+}
+
+/* Kelas baru untuk menghilangkan garis tepi kanan */
+.edge-right {
+  border-right: none !important; /* Rahasia hilangkan garis kanan tepi */
+}
+.col-label { width: 45%; }
+.col-val1 { width: 11%; } /* Khusus untuk kolom "Umur" di baris 8 */
+.col-val2 { width: 30%; }
+
+/* Utility Classes untuk memanipulasi garis dalam tabel (Secret Sauce) */
+.nb-t { border-top: none !important; }
+.nb-b { border-bottom: none !important; }
+.nb-y { border-top: none !important; border-bottom: none !important; }
+
+/* Flexbox untuk poin 9 (Pembebanan Anggaran) */
+.flex-space {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.pb-row8 { 
+  padding-bottom: 40px !important; /* Silakan ubah angka 40px ini sesuai selera/kebutuhan lebar ruangnya */
+}
+/* Layout Khusus Baris 9 */
+.r9-wrapper {
+  display: flex;
+  width: 100%;
+}
+.r9-left { flex: 1; }
+.r9-mid { width: 70px; }
+.r9-right { width: 35px; }
+.pb-custom { padding-bottom: 1px !important; } /* Memberi jarak nafas antar baris */
+
+/* Tabel Tanda Tangan Bawah */
+.spd-footer {
+  width: 250px;
+  margin-left: auto;
+  margin-top: 15px;
+}
+.spd-footer table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.spd-footer td {
+  border: none !important;
+  padding: 2px;
+  vertical-align: top;
+}
+.text-center { text-align: center; }
+.font-bold { font-weight: bold; }
+.font-underline { text-decoration: underline; }
+`;
+
 export default function ReportSPD({ row }) {
+  // Mapping Data (Ganti string statis dengan data dari 'row' jika ada)
+  const noSPD = row["NoLengkapSPD"] || "XXXXXXXXXXXXXXXX";
+  const namaPpk = "Siti Taufiq Hidayati, SST, M.Ak";
+  const nipPpk = "198503292009122005";
+  
+  const namaPegawai = row["NamaCocok"] || "XXXXXXXXXXXXXXXX";
+  const nipPegawai = row["NIP"] || "XXXXXXXXXXXXXXXX";
+  const pangkat = row["Pangkat"] || "XXXXXXXXXXXXXXXX";
+  const jabatan = row["Jabatan"] || "XXXXXXXXXXXXXXXX";
+  const tingkatBiaya = "C";
+  
+  const maksud = row["Tujuan Kegiatan"] ? `${row["Tujuan Kegiatan"]} ${row["Nama Survei"]}` : "XXXXXXXXXXXXXXXX";
+  const kendaraan ="Kendaraan Umum";
+  const kecAsal = "Kec. Mojosongo";
+  const kecTujuan = formatKecamatan(row["Kecamatan(1)"]) || "XXXXXXXXXXXXXXXX";
+  
+  const lama = "1 (satu) hari";
+  const tglBerangkat = formatFullDate(row["Tanggal Kunjungan"]) || "XXXXXXXXXXXXXXXX";
+  const tglKembali = formatFullDate(row["Tanggal Kunjungan"]) || "XXXXXXXXXXXXXXXX";
+  const tglKwitansi = row["tglKwitansi"] || "XXXXXXXXXXXXXXXX";
+
+  const program1 = row["Program1"] || "XXXXXXXXXXXXXXXX";
+  const kegiatan1 = row["Kegiatan1"] || "XXXXXXXXXXXXXXXX";
+  const komponen1 = row["Komponen1"] || "XXXXXXXXXXXXXXXX";
+
+    const program2 = row["Program2"] || "XXXXXXXXXXXXXXXX";
+  const kegiatan2 = row["Kegiatan2"] || "XXXXXXXXXXXXXXXX";
+  const komponen2 = row["Komponen2"] || "XXXXXXXXXXXXXXXX";
   return (
-    <div
-      dangerouslySetInnerHTML={{
-        __html: `
-        <style>
-@font-face {
-  font-family: "TimesWeb";
-  src: url("/fonts/nimbusroman-regular.ttf") format("truetype");
-  font-weight: normal;
-}
-@font-face {
-  font-family: "TimesWeb";
-  src: url("/fonts/nimbusroman-bold.ttf") format("truetype");
-  font-weight: bold;
-}
-@font-face {
-  font-family: "TimesWeb";
-  src: url("/fonts/nimbusroman-italic.ttf") format("truetype");
-  font-style: italic;
-}
+    <>
+      {/* Suntikkan CSS khusus SPD */}
+      <style>{spdStyles}</style>
 
-/* paksa semua isi dokumen pakai font yg konsisten */
-.print-kwitansi *{
-  font-family: "TimesWeb","Times New Roman",serif !important;
-}
+      <div className="spd-container">
+        {/* Header Kanan (Nomor Surat) */}
+        <div className="spd-header-right">
+          <table>
+            <tbody>
+              <tr>
+                <td style={{ width: "60px" }}>Nomor</td>
+                <td style={{ width: "10px" }}>:</td>
+                <td>{noSPD}</td>
+              </tr>
+              <tr>
+                <td>Lembar</td>
+                <td>:</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-/* teks normal rapat */
-.print-kwitansi p{
-  margin:0 !important;
-  line-height:1.2 !important;
-}
+        {/* Header Kiri (Instansi) */}
+        <div className="spd-header-left">
+          Badan Pusat Statistik Kabupaten Boyolali<br />
+          Jl Boyolali-Solo Km 2, Mojosongo, Boyolali
+        </div>
 
-/* class Word */
-.print-kwitansi .MsoNormal{
-  margin:0 !important;
-  line-height:1.2 !important;
-}
+        {/* TABEL UTAMA */}
+        <table className="spd-table">
+          <colgroup>
+            <col style={{ width: "5%" }} />  {/* Kolom 1: Nomor */}
+            <col style={{ width: "45%" }} /> {/* Kolom 2: Label / Pertanyaan */}
+            <col style={{ width: "12%" }} /> {/* Kolom 3: Umur (Bisa dikecilkan lagi kalau mau) */}
+            <col style={{ width: "38%" }} /> {/* Kolom 4: Keterangan */}
+          </colgroup>
+          <tbody>
+            {/* Baris 1 */}
+            <tr>
+              <td className="col-no">1.</td>
+              <td className="col-label">Pejabat Pembuat Komitmen</td>
+              <td colSpan="2 " className="edge-right">{namaPpk}</td>
+            </tr>
 
-/* ⭐ hanya sembunyikan tag o:p di paragraf yang ADA TEKS */
-.print-kwitansi p:not(:empty) o\:p{
-  display:none !important;
-}
+            {/* Baris 2 */}
+            <tr>
+              <td className="col-no">2.</td>
+              <td>Nama/NIP Pegawai yang melaksanakan perjalanan dinas</td>
+              <td colSpan="2" className="edge-right">{namaPegawai} / {nipPegawai}</td>
+            </tr>
 
-/* ⭐ khusus paragraf kosong → jadi spacer tanda tangan */
-.print-kwitansi p:empty{
-  height:14px;   /* tinggi 1 baris kosong */
-}
+            {/* Baris 3 (Dipepecah 3 tanpa garis tengah) */}
+            <tr>
+              <td className="col-no" rowSpan="3">3.</td>
+              <td className="nb-b">a. Pangkat dan Golongan</td>
+              <td colSpan="2" className="nb-b edge-right">{pangkat}</td>
+            </tr>
+            <tr>
+              <td className="nb-y">b. Jabatan/Instansi</td>
+              <td colSpan="2" className="nb-y edge-right">{jabatan}</td>
+            </tr>
+            <tr>
+              <td className="nb-t">c. Tingkat Biaya Perjalanan Dinas</td>
+              <td colSpan="2" className="nb-t edge-right">C</td>
+            </tr>
 
-/* Word kadang isi &nbsp; jadi tidak dianggap empty */
-.print-kwitansi p:has(o\:p:only-child){
-  height:14px;
-}
-</style>
+            {/* Baris 4 */}
+            <tr>
+              <td className="col-no">4.</td>
+              <td>Maksud perjalanan dinas</td>
+              <td colSpan="2" className="edge-right">{maksud}</td>
+            </tr>
 
-<body lang=EN-ID style='tab-interval:.5in;word-wrap:break-word'>
+            {/* Baris 5 */}
+            <tr>
+              <td className="col-no">5.</td>
+              <td>Alat angkutan yang dipergunakan</td>
+              <td colSpan="2" className="edge-right">{kendaraan}</td>
+            </tr>
 
-<div class="print-kwitansi">
+            {/* Baris 6 (Ada garis pemisah) */}
+            <tr>
+              <td className="col-no" rowSpan="2">6.</td>
+              <td className="nb-b pb-custom">a. Tempat berangkat</td>
+              <td colSpan="2" className="nb-b pb-custom edge-right">{kecAsal}</td>
+            </tr>
+            <tr>
+              <td className="nb-y pb-custom">b. Tempat tujuan</td>
+              <td colSpan="2" className="nb-y pb-custom edge-right">{kecTujuan}</td>
+            </tr>
 
-<table class=MsoTableGrid border=0 cellspacing=0 cellpadding=0 width=714
- style='width:535.5pt;border-collapse:collapse;border:none;mso-yfti-tbllook:
- 1184;mso-padding-alt:0in 5.4pt 0in 5.4pt;mso-border-insideh:none;mso-border-insidev:
- none'>
- <tr style='mso-yfti-irow:0;mso-yfti-firstrow:yes;height:17.5pt'>
-  <td width=396 style='width:396pt;padding:0in 5.4pt 0in 5.4pt;height:17.5pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=60 style='width:45.0pt;padding:0in 5.4pt 0in 5.4pt;height:17.5pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt'><span class=SpellE><span lang=EN-US style='font-size:10.0pt;
-  font-family:"Arial",sans-serif;mso-ansi-language:EN-US'>Nomor</span></span><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p></o:p></span></p>
-  </td>
-  <td width=258 style='width:258pt;padding:0in 5.4pt 0in 5.4pt;height:17.5pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>: ${row["NoLengkapSPD"]}<o:p></o:p></span></p>
-  </td>
- </tr>
- <tr style='mso-yfti-irow:1;mso-yfti-lastrow:yes;height:17.5pt'>
-  <td width=396 style='width:297.0pt;padding:0in 5.4pt 0in 5.4pt;height:17.5pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=60 style='width:45.0pt;padding:0in 5.4pt 0in 5.4pt;height:17.5pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>Lembar<o:p></o:p></span></p>
-  </td>
-  <td width=258 style='width:193.5pt;padding:0in 5.4pt 0in 5.4pt;height:17.5pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>:<o:p></o:p></span></p>
-  </td>
- </tr>
-</table>
+            {/* Baris 7 (Ada garis pemisah) */}
+{/* Baris 7 (Garis pemisah dihilangkan agar terlihat menyatu) */}
+            <tr>
+              <td className="col-no" rowSpan="3">7.</td>
+              <td className="nb-b pb-custom">a. Lamanya perjalanan Dinas</td>
+              <td colSpan="2" className="nb-b pb-custom edge-right">{lama}</td>
+            </tr>
+            <tr>
+              <td className="nb-y pb-custom">b. Tanggal Berangkat</td>
+              <td colSpan="2" className="nb-y pb-custom edge-right">{tglBerangkat}</td>
+            </tr>
+            <tr>
+              <td className="nb-t pb-custom">c. Tanggal harus kembali / tiba di tempat baru *)</td>
+              <td colSpan="2" className="nb-t pb-custom edge-right">{tglKembali}</td>
+            </tr>
 
-<p class=MsoNormal style='margin-bottom:0in;tab-stops:373.5pt 382.5pt'><span
-lang=EN-US style='font-size:10.0pt;line-height:115%;font-family:"Arial",sans-serif;
-mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
+            {/* Baris 8 (Dipecah jadi 3 kolom kanan) */}
+{/* Baris 8 (Ditambah ruang kosong di bawahnya) */}
+            <tr>
+              <td className="col-no pb-row8">8.</td>
+              <td className="pb-row8">Pengikut : Nama</td>
+              <td className="text-center pb-row8">Umur</td>
+              <td className="text-center pb-row8 edge-right">Hubungan keluarga/keterangan</td>
+            </tr>
 
-<table class=MsoTableGrid border=0 cellspacing=0 cellpadding=0
- style='margin-left:-4.5pt;border-collapse:collapse;border:none;mso-yfti-tbllook:
- 1184;mso-padding-alt:0in 5.4pt 0in 5.4pt;mso-border-insideh:none;mso-border-insidev:
- none'>
- <tr style='mso-yfti-irow:0;mso-yfti-firstrow:yes;height:14.85pt'>
-  <td width=19 valign=top style='width:.2in;padding:0in 5.4pt 0in 5.4pt;
-  height:14.85pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=679 style='width:508.9pt;padding:0in 5.4pt 0in 5.4pt;height:14.85pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>Badan Pusat <span class=SpellE>Statistik</span> <span
-  class=SpellE>Kabupaten</span> <span class=SpellE>Boyolali</span><o:p></o:p></span></p>
-  </td>
- </tr>
- <tr style='mso-yfti-irow:1;mso-yfti-lastrow:yes;height:.25in'>
-  <td width=19 valign=top style='width:.2in;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=679 valign=top style='width:508.9pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt'><span class=SpellE><span lang=EN-US style='font-size:10.0pt;
-  font-family:"Arial",sans-serif;mso-ansi-language:EN-US'>Jl</span></span><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'> <span class=SpellE>Boyolali</span>-Solo Km 2, <span class=SpellE>Mojosongo</span>,
-  <span class=SpellE>Boyolali</span><o:p></o:p></span></p>
-  </td>
- </tr>
-</table>
+            {/* Baris 9 (Kompleks: Tanpa garis horisontal di tengah) */}
+{/* Baris 9 (Diperbaiki agar persis gambar) */}
+            <tr>
+              <td className="col-no" rowSpan="5">9.</td>
+              <td className="nb-b pb-custom">
+                <div className="r9-wrapper">
+                  <div className="r9-left">Pembebanan Anggaran</div>
+                  <div className="r9-mid">Program</div>
+                  <div className="r9-right">{program1}</div>
+                </div>
+              </td>
+              <td colSpan="2" className="nb-b pb-custom edge-right">
+                {program2}
+              </td>
+            </tr>
+            <tr>
+              <td className="nb-y pb-custom">
+                <div className="r9-wrapper">
+                  <div className="r9-left"></div>
+                  <div className="r9-mid">Kegiatan</div>
+                  <div className="r9-right">{kegiatan1}</div>
+                </div>
+              </td>
+              <td colSpan="2" className="nb-y pb-custom edge-right">
+                {kegiatan2}
+              </td>
+            </tr>
+            <tr>
+              <td className="nb-y pb-custom">
+                <div className="r9-wrapper">
+                  <div className="r9-left"></div>
+                  <div className="r9-mid">Komponen</div>
+                  <div className="r9-right">{komponen1}</div>
+                </div>
+              </td>
+              <td colSpan="2" className="nb-y pb-custom edge-right">
+                {komponen2}
+              </td>
+            </tr>
+            <tr>
+              <td className="nb-y">a. Intansi</td>
+              <td colSpan="2" className="nb-y edge-right">Badan Pusat Statistik Boyolali</td>
+            </tr>
+            <tr>
+              <td className="nb-t">b. Mata anggaran</td>
+              <td colSpan="2" className="nb-t edge-right">524113</td>
+            </tr>
 
-<table class=MsoTableGrid border=1 cellspacing=0 cellpadding=0 align=left
- width=717 style='width:537.7pt;border-collapse:collapse;border:none;
- mso-border-alt:solid windowtext .5pt;mso-table-overlap:never;mso-yfti-tbllook:
- 1184;mso-table-lspace:9.0pt;margin-left:6.75pt;mso-table-rspace:9.0pt;
- margin-right:6.75pt;mso-table-anchor-vertical:paragraph;mso-table-anchor-horizontal:
- column;mso-table-left:left;mso-table-top:.05pt;mso-padding-alt:0in 5.4pt 0in 5.4pt'>
- <tr style='mso-yfti-irow:0;mso-yfti-firstrow:yes;height:.5in;mso-row-margin-right:
-  2.2pt'>
-  <td width=33 style='width:24.75pt;border:solid windowtext 1.0pt;border-left:
-  none;mso-border-top-alt:solid windowtext .5pt;mso-border-bottom-alt:solid windowtext .5pt;
-  mso-border-right-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.5in'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>1.<o:p></o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border:solid windowtext 1.0pt;
-  border-left:none;mso-border-left-alt:solid windowtext .5pt;mso-border-alt:
-  solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:.5in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span class=SpellE><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Pejabat</span></span><span lang=EN-US style='font-size:10.0pt;
-  font-family:"Arial",sans-serif;mso-ansi-language:EN-US'> <span class=SpellE>Pembuat</span>
-  <span class=SpellE>Komitmen</span><o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 style='width:274.5pt;border-top:solid windowtext 1.0pt;
-  border-left:none;border-bottom:solid windowtext 1.0pt;border-right:none;
-  mso-border-left-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-left-alt:solid windowtext .5pt;mso-border-bottom-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:.5in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Siti Taufiq Hidayati, SST, <span class=SpellE><span class=GramE>M.Ak</span></span><o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:1;height:.5in;mso-row-margin-right:2.2pt'>
-  <td width=33 style='width:24.75pt;border-top:none;border-left:none;
-  border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:.5in'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>2.<o:p></o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:.5in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Nama/NIP <span class=SpellE>Pegawai</span> yang <span class=SpellE>melaksanakan</span>
-  <span class=SpellE>perjalanan</span> <span class=SpellE>dinas</span><o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 style='width:274.5pt;border:none;border-bottom:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.5in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>${row["NamaCocok"]} / ${row["NIP"]}<o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:2;height:.25in;mso-row-margin-right:2.2pt'>
-  <td width=33 style='width:24.75pt;border:none;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-right-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>3.<o:p></o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border:none;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-right-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>a. </span><span lang=EN-US><span style='mso-spacerun:yes'> </span></span><span
-  class=SpellE><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>Pangkat</span></span><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'> dan <span class=SpellE>Golongan</span><o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 style='width:274.5pt;border:none;mso-border-top-alt:
-  solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>${row["Pangkat"]}<o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:3;height:17.85pt;mso-row-margin-right:2.2pt'>
-  <td width=33 style='width:24.75pt;border:none;border-right:solid windowtext 1.0pt;
-  mso-border-right-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:17.85pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border:none;border-right:solid windowtext 1.0pt;
-  mso-border-left-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-right-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:17.85pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>b. </span><span style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-fareast-font-family:"Times New Roman";color:black;mso-font-kerning:0pt;
-  mso-ligatures:none;mso-fareast-language:EN-ID'><span
-  style='mso-spacerun:yes'> </span><span class=SpellE>Jabatan</span>/<span
-  class=SpellE>Instansi</span></span><span lang=EN-US style='font-size:10.0pt;
-  font-family:"Arial",sans-serif;mso-ansi-language:EN-US'><o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 style='width:274.5pt;border:none;mso-border-left-alt:
-  solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:17.85pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>${row["Jabatan"]}<o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:4;height:17.85pt;mso-row-margin-right:2.2pt'>
-  <td width=33 style='width:24.75pt;border-top:none;border-left:none;
-  border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:17.85pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-left-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:17.85pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>c. </span><span style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-fareast-font-family:"Times New Roman";color:black;mso-font-kerning:0pt;
-  mso-ligatures:none;mso-fareast-language:EN-ID'><span
-  style='mso-spacerun:yes'> </span>Tingkat <span class=SpellE>Biaya</span> <span
-  class=SpellE>Perjalanan</span> Dinas</span><span lang=EN-US style='font-size:
-  10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:EN-US'><o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 style='width:274.5pt;border:none;border-bottom:solid windowtext 1.0pt;
-  mso-border-left-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:17.85pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>C<o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:5;height:53.35pt;mso-row-margin-right:2.2pt'>
-  <td width=33 valign=top style='width:24.75pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:53.35pt'>
-  <p class=MsoNormal align=center style='margin-top:3.0pt;margin-right:0in;
-  margin-bottom:0in;margin-left:0in;text-align:center;line-height:normal;
-  tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;
-  mso-element-wrap:around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>4.<o:p></o:p></span></p>
-  </td>
-  <td width=315 colspan=2 valign=top style='width:236.25pt;border-top:none;
-  border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:53.35pt'>
-  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0in;margin-bottom:
-  0in;margin-left:0in;line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:
-  frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:
-  paragraph;mso-element-anchor-horizontal:column;mso-element-top:.05pt;
-  mso-height-rule:exactly'><span lang=EN-US style='font-size:10.0pt;font-family:
-  "Arial",sans-serif;mso-ansi-language:EN-US'>Maksud <span class=SpellE>perjalanan</span>
-  <span class=SpellE>dinas</span><o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 valign=top style='width:274.5pt;border:none;
-  border-bottom:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-left-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-left-alt:solid windowtext .5pt;mso-border-bottom-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:53.35pt'>
-  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0in;margin-bottom:
-  0in;margin-left:0in;line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:
-  frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:
-  paragraph;mso-element-anchor-horizontal:column;mso-element-top:.05pt;
-  mso-height-rule:exactly'><span lang=EN-US style='font-size:10.0pt;font-family:
-  "Arial",sans-serif;mso-ansi-language:EN-US'>${row["Tujuan Kegiatan"] || "-"} ${row["Nama Survei"] || "-"}<o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:6;height:.25in;mso-row-margin-right:2.2pt'>
-  <td width=33 style='width:24.75pt;border-top:none;border-left:none;
-  border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>5.<o:p></o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Alat <span class=SpellE>angkutan</span> yang <span class=SpellE>dipergunakan</span><o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 style='width:274.5pt;border:none;border-bottom:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span class=SpellE><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Kendaraan</span></span><span lang=EN-US style='font-size:10.0pt;
-  font-family:"Arial",sans-serif;mso-ansi-language:EN-US'> Umum<o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:7;height:.25in;mso-row-margin-right:2.2pt'>
-  <td width=33 style='width:24.75pt;border-top:none;border-left:none;
-  border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>6.<o:p></o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>a. <span class=SpellE>Tempat</span> <span class=SpellE>berangkat</span><o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 style='width:274.5pt;border:none;border-bottom:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span class=SpellE><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Kec</span></span><span lang=EN-US style='font-size:10.0pt;font-family:
-  "Arial",sans-serif;mso-ansi-language:EN-US'>. <span class=SpellE>Mojosongo</span><o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:8;height:.25in;mso-row-margin-right:2.2pt'>
-  <td width=33 style='width:24.75pt;border-top:none;border-left:none;
-  border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>b. <span class=SpellE>Tempat</span> <span class=SpellE>tujuan</span><o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 style='width:274.5pt;border:none;border-bottom:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>${formatKecamatan(row["Kecamatan(1)"])}<o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:9;height:.25in;mso-row-margin-right:2.2pt'>
-  <td width=33 style='width:24.75pt;border-top:none;border-left:none;
-  border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>7.<o:p></o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>a. </span><span style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-fareast-font-family:"Times New Roman";color:black;mso-font-kerning:0pt;
-  mso-ligatures:none;mso-fareast-language:EN-ID'><span
-  style='mso-spacerun:yes'> </span>Lamanya <span class=SpellE>perjalanan</span>
-  Dinas</span><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 style='width:274.5pt;border:none;border-bottom:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>1 (<span class=SpellE>satu</span>) <span class=SpellE>hari</span><o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:10;height:.25in;mso-row-margin-right:2.2pt'>
-  <td width=33 style='width:24.75pt;border-top:none;border-left:none;
-  border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>b. </span><span style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-fareast-font-family:"Times New Roman";color:black;mso-font-kerning:0pt;
-  mso-ligatures:none;mso-fareast-language:EN-ID'><span
-  style='mso-spacerun:yes'> </span><span class=SpellE>Tanggal</span> <span
-  class=SpellE>Berangkat</span></span><span lang=EN-US style='font-size:10.0pt;
-  font-family:"Arial",sans-serif;mso-ansi-language:EN-US'><o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 style='width:274.5pt;border:none;border-bottom:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>${formatFullDate(row["Tanggal Kunjungan"])}<o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:11;height:18.4pt;mso-row-margin-right:2.2pt'>
-  <td width=33 style='width:24.75pt;border-top:none;border-left:none;
-  border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:18.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:18.4pt'>
-  <p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:0in;
-  margin-left:15.8pt;text-indent:-15.8pt;line-height:normal;tab-stops:373.5pt 382.5pt;
-  mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:around;
-  mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:column;
-  mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>c. </span><span lang=EN-US><span style='mso-spacerun:yes'> </span></span><span
-  class=SpellE><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>Tanggal</span></span><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'> <span class=SpellE>harus</span> <span class=SpellE>kembali</span> / <span
-  class=SpellE>tiba</span> di <span class=SpellE>tempat</span> <span
-  class=SpellE>baru</span> *)<o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 valign=top style='width:274.5pt;border:none;
-  border-bottom:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-left-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-left-alt:solid windowtext .5pt;mso-border-bottom-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:18.4pt'>
-  <p class=MsoNormal style='margin-top:4.0pt;margin-right:0in;margin-bottom:
-  0in;margin-left:0in;line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:
-  frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:
-  paragraph;mso-element-anchor-horizontal:column;mso-element-top:.05pt;
-  mso-height-rule:exactly'><span lang=EN-US style='font-size:10.0pt;font-family:
-  "Arial",sans-serif;mso-ansi-language:EN-US'>${formatFullDate(row["Tanggal Kunjungan"])}<o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:12;height:40.0pt;mso-row-margin-right:2.2pt'>
-  <td width=33 valign=top style='width:24.75pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:40.0pt'>
-  <p class=MsoNormal align=center style='margin-top:3.0pt;margin-right:0in;
-  margin-bottom:0in;margin-left:0in;text-align:center;line-height:normal;
-  tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;
-  mso-element-wrap:around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>8.<o:p></o:p></span></p>
-  </td>
-  <td width=315 colspan=2 valign=top style='width:236.25pt;border-top:none;
-  border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:40.0pt'>
-  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0in;margin-bottom:
-  0in;margin-left:0in;line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:
-  frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:
-  paragraph;mso-element-anchor-horizontal:column;mso-element-top:.05pt;
-  mso-height-rule:exactly'><span class=SpellE><span class=GramE><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Pengikut</span></span></span><span class=GramE><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'> :</span></span><span lang=EN-US style='font-size:10.0pt;font-family:
-  "Arial",sans-serif;mso-ansi-language:EN-US'> Nama<o:p></o:p></span></p>
-  </td>
-  <td width=135 colspan=2 valign=top style='width:101.35pt;border-top:none;
-  border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:40.0pt'>
-  <p class=MsoNormal align=center style='margin-top:3.0pt;margin-right:0in;
-  margin-bottom:0in;margin-left:0in;text-align:center;line-height:normal;
-  tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;
-  mso-element-wrap:around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span class=SpellE><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Umur</span></span><span lang=EN-US style='font-size:10.0pt;font-family:
-  "Arial",sans-serif;mso-ansi-language:EN-US'><o:p></o:p></span></p>
-  </td>
-  <td width=231 valign=top style='width:173.15pt;border:none;border-bottom:
-  solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:
-  solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:
-  solid windowtext .5pt;mso-border-bottom-alt:solid windowtext .5pt;padding:
-  0in 5.4pt 0in 5.4pt;height:40.0pt'>
-  <p class=MsoNormal align=center style='margin-top:3.0pt;margin-right:0in;
-  margin-bottom:0in;margin-left:0in;text-align:center;line-height:normal;
-  tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;
-  mso-element-wrap:around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span class=SpellE><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Hubungan</span></span><span lang=EN-US style='font-size:10.0pt;
-  font-family:"Arial",sans-serif;mso-ansi-language:EN-US'> <span class=SpellE>keluarga</span>/<span
-  class=SpellE>keterangan</span><o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;border-bottom:solid windowtext 1.0pt'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:13;height:30.25pt'>
-  <td width=33 style='width:24.75pt;border:none;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-right-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:30.25pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>9.<o:p></o:p></span></p>
-  </td>
-  <td width=192 style='width:144.35pt;border:none;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-left-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:30.25pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span class=SpellE><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Pembebanan</span></span><span lang=EN-US style='font-size:10.0pt;
-  font-family:"Arial",sans-serif;mso-ansi-language:EN-US'> <span class=SpellE>Anggaran</span><o:p></o:p></span></p>
-  </td>
-  <td width=123 style='width:91.9pt;border:none;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-right-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:30.25pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Program<o:p></o:p></span></p>
-  </td>
-  <td width=16 style='width:11.8pt;border:none;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-left-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:30.25pt'>
-  <p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:0in;
-  margin-left:33.8pt;text-indent:-33.8pt;line-height:normal;tab-stops:33.8pt 373.5pt 382.5pt;
-  mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:around;
-  mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:column;
-  mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>${row["Program1"]}<o:p></o:p></span></p>
-  </td>
-  <td width=353 colspan=3 style='width:264.9pt;border:none;mso-border-top-alt:
-  solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:30.25pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  0in 373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;
-  mso-element-wrap:around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>${row["Program2"]}<o:p></o:p></span></p>
-  </td>
- </tr>
- <tr style='mso-yfti-irow:14;height:30.4pt'>
-  <td width=33 style='width:24.75pt;border:none;border-right:solid windowtext 1.0pt;
-  mso-border-right-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:30.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=192 style='width:144.35pt;border:none;mso-border-left-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:30.4pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=123 style='width:91.9pt;border:none;border-right:solid windowtext 1.0pt;
-  mso-border-right-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:30.4pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span class=SpellE><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Kegiatan</span></span><span lang=EN-US style='font-size:10.0pt;
-  font-family:"Arial",sans-serif;mso-ansi-language:EN-US'><o:p></o:p></span></p>
-  </td>
-  <td width=16 style='width:11.8pt;border:none;mso-border-left-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:30.4pt'>
-  <p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:0in;
-  margin-left:33.8pt;text-indent:-33.8pt;line-height:normal;tab-stops:33.8pt 373.5pt 382.5pt;
-  mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:around;
-  mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:column;
-  mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>${row["Kegiatan1"]}<o:p></o:p></span></p>
-  </td>
-  <td width=353 colspan=3 style='width:264.9pt;border:none;padding:0in 5.4pt 0in 5.4pt;
-  height:30.4pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  0in 373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;
-  mso-element-wrap:around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span class=SpellE><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>${row["Kegiatan2"]}<o:p></o:p></span></p>
-  </td>
- </tr>
- <tr style='mso-yfti-irow:15;height:30.25pt'>
-  <td width=33 style='width:24.75pt;border:none;border-right:solid windowtext 1.0pt;
-  mso-border-right-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:30.25pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=192 style='width:144.35pt;border:none;mso-border-left-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:30.25pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=123 style='width:91.9pt;border:none;border-right:solid windowtext 1.0pt;
-  mso-border-right-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:30.25pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span class=SpellE><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Komponen</span></span><span lang=EN-US style='font-size:10.0pt;
-  font-family:"Arial",sans-serif;mso-ansi-language:EN-US'><o:p></o:p></span></p>
-  </td>
-  <td width=16 style='width:11.8pt;border:none;mso-border-left-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:30.25pt'>
-  <p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:0in;
-  margin-left:33.8pt;text-indent:-33.8pt;line-height:normal;tab-stops:33.8pt 373.5pt 382.5pt;
-  mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:around;
-  mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:column;
-  mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>${row["Komponen1"]}<o:p></o:p></span></p>
-  </td>
-  <td width=353 colspan=3 style='width:264.9pt;border:none;padding:0in 5.4pt 0in 5.4pt;
-  height:30.25pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span class=SpellE><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>${row["Komponen2"]}<o:p></o:p></span></p>
-  </td>
- </tr>
- <tr style='mso-yfti-irow:16;height:.25in;mso-row-margin-right:2.2pt'>
-  <td width=33 style='width:24.75pt;border:none;border-right:solid windowtext 1.0pt;
-  mso-border-right-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border:none;border-right:solid windowtext 1.0pt;
-  mso-border-left-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-right-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>a. </span><span lang=EN-US><span style='mso-spacerun:yes'> </span></span><span
-  class=SpellE><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>Intansi</span></span><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 style='width:274.5pt;border:none;mso-border-left-alt:
-  solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Badan Pusat <span class=SpellE>Statistik</span> <span class=SpellE>Boyolali</span><o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:17;height:.25in;mso-row-margin-right:2.2pt'>
-  <td width=33 style='width:24.75pt;border-top:none;border-left:none;
-  border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-left-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>b. </span><span lang=EN-US><span style='mso-spacerun:yes'> </span></span><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Mata <span class=SpellE>anggaran</span><o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 style='width:274.5pt;border:none;border-bottom:solid windowtext 1.0pt;
-  mso-border-left-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>524113<o:p></o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <tr style='mso-yfti-irow:18;mso-yfti-lastrow:yes;height:.25in;mso-row-margin-right:
-  2.2pt'>
-  <td width=33 style='width:24.75pt;border-top:none;border-left:none;
-  border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-top-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;mso-border-right-alt:solid windowtext .5pt;
-  padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal;tab-stops:373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:
-  9.0pt;mso-element-wrap:around;mso-element-anchor-vertical:paragraph;
-  mso-element-anchor-horizontal:column;mso-element-top:.05pt;mso-height-rule:
-  exactly'><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>10.<o:p></o:p></span></p>
-  </td>
-  <td width=315 colspan=2 style='width:236.25pt;border-top:none;border-left:
-  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span class=SpellE><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>Keterangan</span></span><span lang=EN-US style='font-size:10.0pt;
-  font-family:"Arial",sans-serif;mso-ansi-language:EN-US'> lain-lain<o:p></o:p></span></p>
-  </td>
-  <td width=366 colspan=3 style='width:274.5pt;border:none;border-bottom:solid windowtext 1.0pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
-  mso-border-bottom-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;
-  height:.25in'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal;tab-stops:
-  373.5pt 382.5pt;mso-element:frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:
-  around;mso-element-anchor-vertical:paragraph;mso-element-anchor-horizontal:
-  column;mso-element-top:.05pt;mso-height-rule:exactly'><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td style='mso-cell-special:placeholder;border:none;padding:0in 0in 0in 0in'
-  width=3><p class='MsoNormal'>&nbsp;</td>
- </tr>
- <![if !supportMisalignedColumns]>
- <tr height=0>
-  <td width=33 style='border:none'></td>
-  <td width=185 style='border:none'></td>
-  <td width=119 style='border:none'></td>
-  <td width=44 style='border:none'></td>
-  <td width=110 style='border:none'></td>
-  <td width=223 style='border:none'></td>
-  <td width=3 style='border:none'></td>
- </tr>
- <![endif]>
-</table>
+            {/* Baris 10 */}
+            <tr>
+              <td className="col-no">10.</td>
+              <td colSpan="3" className="edge-right">Keterangan lain-lain</td>
+            </tr>
+          </tbody>
+        </table>
 
-<p class=MsoNormal style='margin-bottom:0in;tab-stops:373.5pt 382.5pt'><span
-lang=EN-US style='font-size:10.0pt;line-height:115%;font-family:"Arial",sans-serif;
-mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-
-<table class=MsoTableGrid border=1 cellspacing=0 cellpadding=0
- style='margin-left:328.5pt;border-collapse:collapse;border:none;mso-border-alt:
- solid windowtext .5pt;mso-yfti-tbllook:1184;mso-padding-alt:0in 5.4pt 0in 5.4pt'>
- <tr style='mso-yfti-irow:0;mso-yfti-firstrow:yes'>
-  <td width=120 valign=top style='width:89.75pt;border:none;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal'><span
-  class=SpellE><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>Dikeluarkan</span></span><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'> di<o:p></o:p></span></p>
-  </td>
-  <td width=139 valign=top style='width:104.55pt;border:none;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal'><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>: <span class=SpellE>Boyolali</span><o:p></o:p></span></p>
-  </td>
- </tr>
- <tr style='mso-yfti-irow:1;height:26.1pt'>
-  <td width=120 valign=top style='width:89.75pt;border:none;padding:0in 5.4pt 0in 5.4pt;
-  height:26.1pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal'><span
-  class=SpellE><span lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  mso-ansi-language:EN-US'>Tanggal</span></span><span lang=EN-US
-  style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p></o:p></span></p>
-  </td>
-  <td width=139 valign=top style='width:104.55pt;border:none;padding:0in 5.4pt 0in 5.4pt;
-  height:26.1pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal'><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'>: ${row["NoSPD"]}<o:p></o:p></span></p>
-  </td>
- </tr>
- <tr style='mso-yfti-irow:2'>
-  <td width=259 colspan=2 valign=top style='width:194.3pt;border:none;
-  padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal'><span lang=EN-US style='font-size:10.0pt;font-family:
-  "Arial",sans-serif;mso-ansi-language:EN-US'>PEJABAT PEMBUAT KOMITMEN<o:p></o:p></span></p>
-  </td>
- </tr>
- <tr style='mso-yfti-irow:3'>
-  <td width=120 valign=top style='width:89.75pt;border:none;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal'><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=139 valign=top style='width:104.55pt;border:none;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal'><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
- </tr>
- <tr style='mso-yfti-irow:4'>
-  <td width=120 valign=top style='width:89.75pt;border:none;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal'><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=139 valign=top style='width:104.55pt;border:none;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal'><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
- </tr>
- <tr style='mso-yfti-irow:5'>
-  <td width=120 valign=top style='width:89.75pt;border:none;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal'><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=139 valign=top style='width:104.55pt;border:none;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal'><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
- </tr>
- <tr style='mso-yfti-irow:6'>
-  <td width=120 valign=top style='width:89.75pt;border:none;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal'><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
-  <td width=139 valign=top style='width:104.55pt;border:none;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal style='margin-bottom:0in;line-height:normal'><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p>&nbsp;</o:p></span></p>
-  </td>
- </tr>
- <tr style='mso-yfti-irow:7'>
-  <td width=259 colspan=2 valign=top style='width:194.3pt;border:none;
-  padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal'><b><u><span lang=EN-US style='font-size:10.0pt;
-  font-family:"Arial",sans-serif;mso-ansi-language:EN-US'>Siti Taufiq Hidayati,
-  SST, <span class=SpellE><span class=GramE>M.Ak</span></span></span></u></b><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p></o:p></span></p>
-  </td>
- </tr>
- <tr style='mso-yfti-irow:8;mso-yfti-lastrow:yes'>
-  <td width=259 colspan=2 valign=top style='width:194.3pt;border:none;
-  padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal align=center style='margin-bottom:0in;text-align:center;
-  line-height:normal'><b><span lang=EN-US style='font-size:10.0pt;font-family:
-  "Arial",sans-serif;mso-ansi-language:EN-US'>NIP. 198503292009122005</span></b><span
-  lang=EN-US style='font-size:10.0pt;font-family:"Arial",sans-serif;mso-ansi-language:
-  EN-US'><o:p></o:p></span></p>
-  </td>
- </tr>
-</table>
-
-<p class=MsoNormal><span lang=EN-US style='font-size:10.0pt;line-height:115%;
-font-family:"Arial",sans-serif;mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-
-<p class=MsoNormal><span lang=EN-US style='font-size:10.0pt;line-height:115%;
-font-family:"Arial",sans-serif;mso-ansi-language:EN-US'><o:p>&nbsp;</o:p></span></p>
-
-<p class=MsoNormal style='margin-bottom:0in;tab-stops:center 39.25pt'><span
-lang=EN-US style='font-size:10.0pt;line-height:115%;font-family:"Arial",sans-serif;
-mso-ansi-language:EN-US'><br clear=all style='mso-special-character:line-break'>
-<o:p></o:p></span></p>
-
-</div>
-
-</body>
-
-        `,
-      }}
-    />
+        {/* Footer Tanda Tangan */}
+        <div className="spd-footer">
+          <table>
+            <tbody>
+              <tr>
+                <td style={{ width: "100px" }}>Dikeluarkan di</td>
+                <td style={{ width: "10px" }}>:</td>
+                <td>Boyolali</td>
+              </tr>
+              <tr>
+                <td>Tanggal</td>
+                <td>:</td>
+                <td>{tglKwitansi}</td>
+              </tr>
+              <tr>
+                <td colSpan="3" className="text-center" style={{ paddingTop: "15px", paddingBottom: "60px" }}>
+                  PEJABAT PEMBUAT KOMITMEN
+                </td>
+              </tr>
+              <tr>
+                <td colSpan="3" className="text-center font-bold">
+                  <span className="font-underline">{namaPpk}</span><br />
+                  NIP. {nipPpk}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+      </div>
+    </>
   );
 }

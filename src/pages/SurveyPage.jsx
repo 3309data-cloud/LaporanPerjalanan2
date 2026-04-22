@@ -23,24 +23,6 @@ function SurveyPage() {
     setTimeout(() => setAlertMessage(""), 3000);
   };
 
-  /** Proteksi Password untuk aksi krusial */
-  const withPassword = async (callback) => {
-    const pass = window.prompt("Masukkan password konfirmasi:");
-    if (!pass) return;
-
-    try {
-      const res = await fetch(`${API_BASE}?action=checkPassword&password=${encodeURIComponent(pass)}`);
-      const data = await res.json();
-      if (data.success) {
-        await callback();
-      } else {
-        showAlert("Password salah! Akses ditolak.");
-      }
-    } catch (e) {
-      showAlert("Gagal memverifikasi password.");
-    }
-  };
-
   // --- Logic: API Calls ---
   const fetchSurveys = async () => {
     setLoading(true);
@@ -74,52 +56,58 @@ function SurveyPage() {
   }, [form.program, form.kegiatan, master]);
 
   // --- Handlers: Survey Management ---
-  const addSurvey = () => {
+  const addSurvey = async () => {
     if (!newSurvey.trim()) return showAlert("Nama survei tidak boleh kosong");
-    withPassword(async () => {
-      setLoading(true);
+    
+    setLoading(true);
+    try {
       await fetch(`${API_BASE}?action=addSurvey&name=${encodeURIComponent(newSurvey)}`);
       setNewSurvey("");
       await fetchSurveys();
-    });
+    } catch (e) {
+      showAlert("Gagal menambah survei.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleStatus = (index) => {
+  const toggleStatus = async (index) => {
     const survey = surveys[index];
-    withPassword(async () => {
-      setLoading(true);
+    setLoading(true);
+    try {
       const newStatus = survey.Status === "Aktif" ? "Non Aktif" : "Aktif";
       await fetch(`${API_BASE}?action=updateStatus&row=${survey.row}&status=${newStatus}`);
       await fetchSurveys();
-    });
+    } catch (e) {
+      showAlert("Gagal mengubah status.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // --- Handlers: SPD Details ---
   const openSPD = async (rowId) => {
-    // Bungkus dengan withPassword agar meminta password sebelum modal terbuka
-    withPassword(async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_BASE}?action=getSurveyDetail&row=${rowId}`);
-        const data = await res.json();
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}?action=getSurveyDetail&row=${rowId}`);
+      const data = await res.json();
 
-        if (data.success) {
-          setForm({
-            noSPD: data.data.noSPD || "",
-            program: data.data.program || "",
-            kegiatan: data.data.kegiatan || "",
-            komponen: data.data.komponen || "",
-            tglKwitansi: data.data.tglKwitansi || "",
-          });
-          setCurrentRow(rowId);
-          setShowModal(true);
-        }
-      } catch (e) {
-        showAlert("Gagal mengambil detail data dari server.");
-      } finally {
-        setLoading(false);
+      if (data.success) {
+        setForm({
+          noSPD: data.data.noSPD || "",
+          program: data.data.program || "",
+          kegiatan: data.data.kegiatan || "",
+          komponen: data.data.komponen || "",
+          tglKwitansi: data.data.tglKwitansi || "",
+        });
+        setCurrentRow(rowId);
+        setShowModal(true);
       }
-    });
+    } catch (e) {
+      showAlert("Gagal mengambil detail data dari server.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const saveSPD = async () => {
@@ -131,6 +119,8 @@ function SurveyPage() {
       });
       setShowModal(false);
       await fetchSurveys();
+    } catch (e) {
+      showAlert("Gagal menyimpan data SPD.");
     } finally {
       setLoading(false);
     }
@@ -217,7 +207,7 @@ function SurveyPage() {
       {/* MODAL SPD */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[90]">
-          <div className="bg-white p-8 w-full max-w-2xl rounded-3xl shadow-2xl space-y-6 animate-popIn">
+          <div className="bg-white p-8 w-full max-w-2xl rounded-3xl shadow-2xl space-y-6">
             <h2 className="text-xl font-bold text-gray-800 border-b pb-4">Detail SPD</h2>
 
             <div className="grid grid-cols-2 gap-4">
@@ -227,7 +217,7 @@ function SurveyPage() {
                   value={form.noSPD}
                   onChange={(e) => setForm({ ...form, noSPD: e.target.value })}
                   className="w-full p-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                  placeholder="Isikan tanggal Surat Tugas (contoh: 12 April 2026)"
+                  placeholder="Isikan tanggal Surat Tugas"
                 />
               </div>
               <div className="space-y-1">
@@ -236,7 +226,7 @@ function SurveyPage() {
                   value={form.tglKwitansi}
                   onChange={(e) => setForm({ ...form, tglKwitansi: e.target.value })}
                   className="w-full p-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                  placeholder="Isikan tanggal Kwitansi (contoh: 12 April 2026)"
+                  placeholder="Isikan tanggal Kwitansi"
                 />
               </div>
             </div>

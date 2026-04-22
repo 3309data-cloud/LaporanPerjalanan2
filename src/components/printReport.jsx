@@ -9,6 +9,7 @@ import ReportSPD from "../components/new/ReportSPD";
 import Kwitansi from "./new/Kwitansi";
 import PengeluaranRiil from "./new/PengeluaranRiil";
 import PernyataanRandis from "./new/PernyataanRandis";
+import SuratTugas from "./new/SuratTugas";
 
 // 🔥 Cache global agar gambar tidak di-fetch berulang
 const imageCache = window.__imageCache || (window.__imageCache = new Map());
@@ -18,7 +19,7 @@ const reportMap = {
   SPD: ReportSPD,
   Kwitansi: Kwitansi,
   Riil: PengeluaranRiil,
-  Randis: PernyataanRandis
+  Randis: SuratTugas
 };
 
 /**
