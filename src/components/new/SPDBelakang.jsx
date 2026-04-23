@@ -79,7 +79,7 @@ const spdBelakangStyles = `
 
 export default function SPDBelakang({ row }) {
   // Mapping Data (Sesuaikan dengan field data Anda)
-  const asal = row["tujuan"] || ""; 
+  const asal = row["asal"] || ""; 
   const tujuan = row["tujuan"] || "";
   
   // Pejabat
