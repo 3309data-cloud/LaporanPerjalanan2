@@ -157,26 +157,28 @@ const handleImportExcel = async (e) => {
         });
 
         let validData = [];
+        
         for (let i = 0; i < data.length; i++) {
           const item = data[i];
           const keys = Object.keys(item);
 
           // --- LOGIKA NORMALISASI KOLOM ---
           
-          // 1. Cari kolom NIP (nip, N.I.P, NIP Pegawai, dll)
+          // 1. Cari kolom NIP
           const nipKey = keys.find(k => k.toLowerCase().replace(/[\s._]/g, "") === "nip");
-          const nipValue = nipKey ? String(item[nipKey]) : "";
+          const nipValue = nipKey ? String(item[nipKey]).trim() : "";
 
-          // 2. Cari kolom NO ST (Nos t, NO ST, nost, no_st, dll)
-          // Kita cari key yang kalau dibersihkan mengandung kata "nost"
+          // 2. Cari kolom NO ST
           const noSTKey = keys.find(k => k.toLowerCase().replace(/[\s._]/g, "").includes("nost"));
-          const noSTValue = noSTKey ? String(item[noSTKey]) : "";
+          const noSTValue = noSTKey ? String(item[noSTKey]).trim() : "";
 
-          // --------------------------------
-
+          // 3. Cari master pegawai berdasarkan NIP
           const master = pegawaiMaster.find(p => String(p.nip) === nipValue);
 
+          // --- LOGIKA VALIDASI & ANTI-DUPLIKAT ---
+
           if (!master) {
+            // Jika NIP tidak terdaftar di master
             setImportState(prev => ({
               ...prev,
               current: i + 1,
@@ -184,32 +186,61 @@ const handleImportExcel = async (e) => {
               logs: [`❌ NIP ${nipValue || "Kosong"} tidak ditemukan`, ...prev.logs]
             }));
           } else {
-            validData.push({
-              id: Date.now() + i,
-              nip: master.nip,
-              nama: master.nama,
-              noST: noSTValue
-            });
-            setImportState(prev => ({
-              ...prev,
-              current: i + 1,
-              success: prev.success + 1,
-              logs: [`✅ ${master.nama} tervalidasi`, ...prev.logs]
-            }));
+            // Cek apakah kombinasi Nama/NIP + No ST sudah ada di state (petugasRows) 
+            // ATAU sudah ada di list yang baru akan di-import (validData)
+            const isDuplicateInState = petugasRows.some(p => 
+              String(p.nip) === String(master.nip) && String(p.noST) === noSTValue
+            );
+            
+            const isDuplicateInNewData = validData.some(p => 
+              String(p.nip) === String(master.nip) && String(p.noST) === noSTValue
+            );
+
+            if (isDuplicateInState || isDuplicateInNewData) {
+              // Jika duplikat, tampilkan log peringatan dan lewati (skip)
+              setImportState(prev => ({
+                ...prev,
+                current: i + 1,
+                failed: prev.failed + 1,
+                logs: [`⚠️ ${master.nama} - ST: ${noSTValue || "(Tanpa ST)"} sudah ada (Skip)`, ...prev.logs]
+              }));
+            } else {
+              // Jika data unik (tidak duplikat), masukkan ke antrian valid
+              validData.push({
+                id: Date.now() + i + Math.random(), // Tambah random agar ID benar-benar unik
+                nip: master.nip,
+                nama: master.nama,
+                noST: noSTValue
+              });
+
+              setImportState(prev => ({
+                ...prev,
+                current: i + 1,
+                success: prev.success + 1,
+                logs: [`✅ ${master.nama} tervalidasi`, ...prev.logs]
+              }));
+            }
           }
-          await new Promise(res => setTimeout(res, 15));
+          
+          // Memberi nafas pada UI agar tidak membeku
+          await new Promise(res => setTimeout(res, 10));
         }
 
+        // Finalisasi: Gabungkan data baru yang valid ke state utama
         if (validData.length > 0) {
           setPetugasRows(prev => [...prev, ...validData]);
-          showToast(`${validData.length} petugas ditambahkan`, "success");
+          showToast(`${validData.length} petugas baru berhasil ditambahkan`, "success");
+        } else {
+          showToast("Tidak ada data baru yang ditambahkan (semua duplikat/invalid)", "warning");
         }
       }
     } catch (err) {
+      console.error(err);
       showToast("Gagal memproses file", "error");
     } finally {
       setImportState(prev => ({ ...prev, isFinished: true }));
-      e.target.value = "";
+      // Reset input file agar bisa import file yang sama lagi jika perlu
+      if (e.target) e.target.value = "";
     }
   };
   reader.readAsBinaryString(file);
