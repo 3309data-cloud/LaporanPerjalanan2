@@ -167,13 +167,38 @@ function PageABCD({ row, kegiatanIndex }) {
         </div>
 
         {/* B. URUTAN KEGIATAN */}
-        <div className="boxed-section section-b" style={{ marginTop: 18 }}>
-          <div className="boxed-section-title">B. URUTAN KEGIATAN (RINGKASAN HASIL)</div>
-          <div className="boxed-content font-bold mb-[2px]">
-            {row["Tujuan Kegiatan"] || "-"} {row["Nama Survei"] || "-"}
+{/* B. URUTAN KEGIATAN */}
+<div className="boxed-section section-b" style={{ marginTop: 18 }}>
+  <div className="boxed-section-title">B. URUTAN KEGIATAN (RINGKASAN HASIL)</div>
+  <div className="boxed-content font-bold mb-[2px]">
+    {row["Tujuan Kegiatan"] || "-"} {row["Nama Survei"] || "-"}
+  </div>
+  <div className="boxed-content multiline">
+    {kegiatan.split("\n").map((line, i) => {
+      // Regex untuk mendeteksi format jam di awal baris (contoh: 08.00 - 08.30)
+      const timeMatch = line.match(/^(\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2})(.*)/);
+
+      if (timeMatch) {
+        const [_, time, text] = timeMatch;
+        return (
+          <div key={i} className="schedule-item">
+            <span className="schedule-time">{time}</span>
+            <span className="schedule-text">{text.trim()}</span>
           </div>
-          <div className="boxed-content multiline">{kegiatan}</div>
+        );
+      }
+
+      // Jika baris tidak diawali jam (lanjutan teks tanpa jam), 
+      // beri margin kiri agar sejajar dengan teks di atasnya
+      return (
+        <div key={i} className="schedule-item">
+          <span className="schedule-time" /> {/* Kolom kosong untuk jam */}
+          <span className="schedule-text">{line}</span>
         </div>
+      );
+    })}
+  </div>
+</div>
 
         {/* C. PEJABAT */}
         <div className="boxed-section section-c" style={{ marginTop: 18 }}>

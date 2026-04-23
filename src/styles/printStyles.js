@@ -81,7 +81,30 @@ export const printStyles = `
 }
 
 .multiline {
-  white-space: pre-line;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.5;
+}
+
+/* Class khusus untuk item jadwal */
+/* Jika ada jam: Jam tetap di kiri, teks menjorok di kanan */
+.schedule-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.schedule-time {
+  flex-shrink: 0;
+  min-width: 95px; /* Lebar kolom jam */
+  font-weight: 500;
+}
+
+/* Jika TIDAK ada jam: Teks tampil normal memenuhi lebar halaman */
+.normal-text {
+  display: block;
+  margin-bottom: 4px;
+  text-align: justify;
 }
 
 /* =========================================================
