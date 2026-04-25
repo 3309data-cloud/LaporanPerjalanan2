@@ -19,7 +19,7 @@ const reportMap = {
   SPD: ReportSPD,
   Kwitansi: Kwitansi,
   Riil: PengeluaranRiil,
-  Randis: SuratTugas
+  Randis: PernyataanRandis,
 };
 
 /**
